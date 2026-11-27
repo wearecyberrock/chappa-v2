@@ -152,7 +152,7 @@
     };
   }
 
-  // Paint crisp 1024x1024 Guy Fawkes PBR Albedo + Feature Texture matching reference mask
+  // Paint crisp 1024x1024 Guy Fawkes Feature + AO Map (drives 3D Binary 1/0 face relief — zero weird skin!)
   function buildMaskTextureCanvas() {
     const S = 1024;
     const c = document.createElement('canvas');
@@ -161,12 +161,7 @@
     const px = (u) => (u + 1.0) * 0.5 * S;
     const py = (v) => (v + 1.0) * 0.5 * S;
 
-    // Smooth studio porcelain alabaster base (balanced luminance so 3D highlights pop without blowing out)
-    const base = g.createRadialGradient(px(0), py(-0.06), S * 0.06, px(0), py(0.05), S * 0.62);
-    base.addColorStop(0, '#eef2f7');
-    base.addColorStop(0.62, '#dce3ed');
-    base.addColorStop(1, '#bcc7d6');
-    g.fillStyle = base;
+    g.fillStyle = '#ffffff';
     g.fillRect(0, 0, S, S);
 
     function softSpot(u, v, rx, ry, col) {
@@ -183,30 +178,13 @@
       g.restore();
     }
 
-    // Soft studio ambient occlusion in sockets, under nose, nostrils, chin hollow
-    softSpot(-0.34, -0.175, 0.23, 0.14, 'rgba(18, 28, 46, 0.24)');
-    softSpot(0.34, -0.175, 0.23, 0.14, 'rgba(18, 28, 46, 0.24)');
-    softSpot(0.0, 0.215, 0.15, 0.055, 'rgba(20, 30, 46, 0.22)');
-    softSpot(-0.075, 0.202, 0.048, 0.032, 'rgba(10, 14, 22, 0.72)');
-    softSpot(0.075, 0.202, 0.048, 0.032, 'rgba(10, 14, 22, 0.72)');
-    softSpot(0.0, 0.60, 0.20, 0.06, 'rgba(24, 36, 56, 0.14)');
-
-    // Iconic airbrushed rosy pink/crimson cheeks (matching reference image.png)
-    softSpot(-0.55, 0.09, 0.16, 0.13, 'rgba(232, 48, 86, 0.44)');
-    softSpot(0.55, 0.09, 0.16, 0.13, 'rgba(232, 48, 86, 0.44)');
-
-    // Subtle Spider-Verse Ben-Day halftone micro-dots inside the cheek blush
-    g.fillStyle = 'rgba(232, 28, 46, 0.20)';
-    [-0.55, 0.55].forEach((cu) => {
-      for (let dy = -3; dy <= 3; dy++) {
-        for (let dx = -3; dx <= 3; dx++) {
-          if (dx * dx + dy * dy > 8) continue;
-          g.beginPath();
-          g.arc(px(cu) + dx * 11, py(0.09) + dy * 11, 2.0, 0, Math.PI * 2);
-          g.fill();
-        }
-      }
-    });
+    // Subtle anatomical ambient occlusion in eye sockets, nostrils, under-nose & chin hollow
+    softSpot(-0.34, -0.175, 0.24, 0.145, 'rgba(0, 0, 0, 0.34)');
+    softSpot(0.34, -0.175, 0.24, 0.145, 'rgba(0, 0, 0, 0.34)');
+    softSpot(0.0, 0.22, 0.16, 0.06, 'rgba(0, 0, 0, 0.30)');
+    softSpot(-0.075, 0.202, 0.052, 0.036, 'rgba(0, 0, 0, 0.82)');
+    softSpot(0.075, 0.202, 0.052, 0.036, 'rgba(0, 0, 0, 0.82)');
+    softSpot(0.0, 0.60, 0.20, 0.065, 'rgba(0, 0, 0, 0.20)');
 
     function drawMirrorShape(fn) {
       [-1, 1].forEach((sgn) => {
@@ -214,46 +192,80 @@
         g.beginPath();
         fn(sgn);
         g.closePath();
-        g.fillStyle = '#0f121a';
+        g.fillStyle = '#000000';
         g.fill();
         g.restore();
       });
     }
 
-    // Crisp dark arched Guy Fawkes eyebrows
+    // Crisp carved arched Guy Fawkes eyebrows
     drawMirrorShape((s) => {
-      g.moveTo(px(s * 0.10), py(-0.295));
-      g.bezierCurveTo(px(s * 0.24), py(-0.435), px(s * 0.47), py(-0.435), px(s * 0.635), py(-0.305));
-      g.bezierCurveTo(px(s * 0.50), py(-0.365), px(s * 0.26), py(-0.365), px(s * 0.125), py(-0.262));
+      g.moveTo(px(s * 0.095), py(-0.295));
+      g.bezierCurveTo(px(s * 0.24), py(-0.445), px(s * 0.48), py(-0.445), px(s * 0.645), py(-0.305));
+      g.bezierCurveTo(px(s * 0.50), py(-0.360), px(s * 0.26), py(-0.360), px(s * 0.125), py(-0.258));
     });
 
-    // Crisp upturned curled handlebar mustache
+    // Crisp carved upturned curled handlebar mustache
     drawMirrorShape((s) => {
-      g.moveTo(px(s * 0.005), py(0.325));
-      g.bezierCurveTo(px(s * 0.12), py(0.285), px(s * 0.24), py(0.395), px(s * 0.44), py(0.382));
-      g.bezierCurveTo(px(s * 0.54), py(0.372), px(s * 0.60), py(0.305), px(s * 0.635), py(0.228));
-      g.bezierCurveTo(px(s * 0.575), py(0.335), px(s * 0.50), py(0.425), px(s * 0.34), py(0.435));
-      g.bezierCurveTo(px(s * 0.19), py(0.442), px(s * 0.08), py(0.385), px(s * 0.005), py(0.378));
+      g.moveTo(px(s * 0.004), py(0.320));
+      g.bezierCurveTo(px(s * 0.12), py(0.278), px(s * 0.24), py(0.392), px(s * 0.44), py(0.380));
+      g.bezierCurveTo(px(s * 0.545), py(0.370), px(s * 0.605), py(0.302), px(s * 0.645), py(0.222));
+      g.bezierCurveTo(px(s * 0.580), py(0.340), px(s * 0.505), py(0.432), px(s * 0.34), py(0.442));
+      g.bezierCurveTo(px(s * 0.19), py(0.450), px(s * 0.08), py(0.390), px(s * 0.004), py(0.384));
     });
 
-    // Subtle smile lip slit
-    g.strokeStyle = 'rgba(20, 24, 34, 0.85)';
-    g.lineWidth = 7;
+    // Crisp carved smile lip slit
+    g.strokeStyle = '#000000';
+    g.lineWidth = 10;
     g.lineCap = 'round';
     g.beginPath();
-    g.moveTo(px(-0.24), py(0.455));
-    g.quadraticCurveTo(px(0), py(0.48), px(0.24), py(0.455));
+    g.moveTo(px(-0.25), py(0.458));
+    g.quadraticCurveTo(px(0), py(0.485), px(0.25), py(0.458));
     g.stroke();
 
     // Iconic tapered pointed goatee
     g.beginPath();
-    g.moveTo(px(-0.084), py(0.575));
-    g.quadraticCurveTo(px(0), py(0.558), px(0.084), py(0.575));
-    g.bezierCurveTo(px(0.064), py(0.73), px(0.042), py(0.86), px(0.0), py(0.955));
-    g.bezierCurveTo(px(-0.042), py(0.86), px(-0.064), py(0.73), px(-0.084), py(0.575));
+    g.moveTo(px(-0.088), py(0.572));
+    g.quadraticCurveTo(px(0), py(0.554), px(0.088), py(0.572));
+    g.bezierCurveTo(px(0.068), py(0.73), px(0.045), py(0.86), px(0.0), py(0.958));
+    g.bezierCurveTo(px(-0.045), py(0.86), px(-0.068), py(0.73), px(-0.088), py(0.572));
     g.closePath();
-    g.fillStyle = '#0f121a';
+    g.fillStyle = '#000000';
     g.fill();
+
+    return c;
+  }
+
+  // Crisp 512x256 Dual-Channel Binary Glyph Atlas:
+  //   Tile 0 (x: 0..256) = '0', Tile 1 (x: 256..512) = '1'
+  //   R channel = razor-sharp monospace digit core
+  //   G channel = soft radial neon Matrix glow halo
+  function buildBinaryGlyphAtlas() {
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 256;
+    const g = c.getContext('2d');
+    g.fillStyle = '#000000';
+    g.fillRect(0, 0, 512, 256);
+
+    g.font = '800 198px "DejaVu Sans Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+
+    // Soft neon bloom halo in G channel
+    g.shadowColor = '#00ff00';
+    g.shadowBlur = 26;
+    g.fillStyle = '#00b800';
+    g.fillText('0', 128, 134);
+    g.fillText('1', 384, 134);
+    g.fillText('0', 128, 134);
+    g.fillText('1', 384, 134);
+
+    // Razor-sharp core strokes in R channel (additive over G)
+    g.globalCompositeOperation = 'lighter';
+    g.shadowBlur = 0;
+    g.fillStyle = '#ff0000';
+    g.fillText('0', 128, 134);
+    g.fillText('1', 384, 134);
 
     return c;
   }
@@ -365,11 +377,19 @@
   in vec3 vLocal;
 
   uniform sampler2D uTex;
+  uniform sampler2D uGlyphTex;
   uniform float uTime;
   uniform int uState; // 0=IDLE, 1=RECON, 2=ALERT, 3=CONTAINED
   uniform float uCustomMesh;
   uniform float uRedTheme;
   out vec4 outColor;
+
+  float hash11(float p) {
+    return fract(sin(p * 127.1 + 311.7) * 43758.5453123);
+  }
+  float hash21(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+  }
 
   float eyeSlit(vec2 fuv) {
     float au = abs(fuv.x);
@@ -387,80 +407,138 @@
     vec3 N = normalize(gl_FrontFacing ? vNormal : -vNormal);
     vec3 V = normalize(-vViewPos);
 
-    // State & Theme reactive rim colors (Red Matrix default OR Agentsar Cyan/Crimson)
-    vec3 rimCyan = uRedTheme > 0.5 ? vec3(0.96, 0.10, 0.20) : vec3(0.03, 0.71, 0.91);
-    vec3 rimRed  = uRedTheme > 0.5 ? vec3(1.00, 0.28, 0.18) : vec3(0.91, 0.11, 0.18);
+    // Theme & State Matrix palette (Red Matrix crimson default; Emerald lock for CONTAINED)
+    vec3 colDeep = vec3(0.55, 0.03, 0.07);
+    vec3 colMid  = vec3(1.00, 0.11, 0.21);
+    vec3 colHot  = vec3(1.00, 0.78, 0.84);
     if (uState == 2) {
-      rimCyan = vec3(1.0, 0.08, 0.16);
-      rimRed  = vec3(1.0, 0.32, 0.14);
+      colDeep = vec3(0.70, 0.02, 0.06);
+      colMid  = vec3(1.00, 0.08, 0.16);
+      colHot  = vec3(1.00, 0.90, 0.85);
     } else if (uState == 3) {
-      rimCyan = vec3(0.07, 0.78, 0.56);
-      rimRed  = uRedTheme > 0.5 ? vec3(0.92, 0.14, 0.22) : vec3(0.04, 0.68, 0.88);
+      colDeep = vec3(0.04, 0.40, 0.26);
+      colMid  = vec3(0.08, 0.92, 0.62);
+      colHot  = vec3(0.84, 1.00, 0.94);
+    } else if (uRedTheme < 0.5) {
+      colDeep = vec3(0.02, 0.36, 0.55);
+      colMid  = vec3(0.06, 0.80, 0.98);
+      colHot  = vec3(0.82, 0.98, 1.00);
     }
 
-    // Real hollow pierced eye cutouts with glowing cyber core inside the socket
+    // Hollow pierced eye cutouts with fierce glowing cyber core inside the socket
     if (uCustomMesh < 0.5) {
       float es = eyeSlit(fuv);
       if (es < 0.0) {
-        float px = (abs(fuv.x) - 0.345) / 0.055;
-        float py = (fuv.y + 0.178) / 0.028;
-        float pupil = exp(-(px * px + py * py) * 2.4);
-        vec3 eyeBase = (uRedTheme > 0.5 || uState == 2) ? vec3(1.0, 0.10, 0.18) : rimCyan;
-        vec3 eyeGlow = eyeBase * (0.32 + 0.95 * pupil);
-        vec3 voidCol = vec3(0.02, 0.006, 0.01) + eyeGlow * (0.7 + 0.3 * sin(uTime * 3.5));
-        outColor = vec4(voidCol, 0.99);
+        float px = (abs(fuv.x) - 0.345) / 0.052;
+        float py = (fuv.y + 0.178) / 0.026;
+        float pupil = exp(-(px * px + py * py) * 2.6);
+        float iris  = exp(-(px * px + py * py) * 0.85);
+        float pulse = 0.78 + 0.22 * sin(uTime * 3.8);
+        vec3 eyeCol = vec3(0.012, 0.002, 0.004)
+          + colMid * (0.28 * iris + 0.95 * pupil) * pulse
+          + colHot * (0.65 * pow(pupil, 2.0)) * pulse;
+        outColor = vec4(eyeCol, 0.98);
         return;
       }
-      if (es < 0.012) {
-        outColor = vec4(mix(vec3(0.06, 0.04, 0.06), rimCyan * 0.75, 0.42), 1.0);
+      if (es < 0.014) {
+        float rimT = smoothstep(0.014, 0.0, es);
+        outColor = vec4(mix(vec3(0.03, 0.004, 0.008), colMid * 0.72, rimT), 0.98);
         return;
       }
     }
 
-    vec3 albedo = uCustomMesh > 0.5 ? vec3(0.90, 0.93, 0.96) : texture(uTex, vUv).rgb;
-    float isDarkFeature = 1.0 - smoothstep(0.18, 0.42, dot(albedo, vec3(0.333)));
+    // Feature & AO map: 1.0 = face surface, 0.0 = carved eyebrows / mustache / smile / goatee
+    float featSample = uCustomMesh > 0.5 ? 1.0 : texture(uTex, vUv).r;
+    float carvedVoid = 1.0 - smoothstep(0.16, 0.44, featSample);
+    float ao = mix(0.32, 1.0, smoothstep(0.22, 0.95, featSample));
 
-    // 3-point Cinema Studio + Hologram Lighting (Key + Left Rim + Right Rim)
-    vec3 Lkey  = normalize(vec3(0.28, 0.52, 0.84));
-    vec3 Lrim1 = normalize(vec3(-0.90, 0.22, 0.26));
-    vec3 Lrim2 = normalize(vec3(0.90, -0.15, 0.24));
-
+    // Real 3D surface lighting (sculpts forehead, cheekbones, nose bridge, lips & chin in 3D!)
+    vec3 Lkey  = normalize(vec3(0.24, 0.46, 0.86));
+    vec3 Lfill = normalize(vec3(-0.55, 0.18, 0.78));
     float diffKey  = max(dot(N, Lkey), 0.0);
-    float diffRim1 = max(dot(N, Lrim1), 0.0);
-    float diffRim2 = max(dot(N, Lrim2), 0.0);
+    float diffFill = max(dot(N, Lfill), 0.0);
+    float wrapDiff = max((dot(N, Lkey) + 0.22) / 1.22, 0.0);
 
     vec3 H = normalize(Lkey + V);
-    float spec = pow(max(dot(N, H), 0.0), mix(52.0, 16.0, isDarkFeature)) * mix(0.42, 0.14, isDarkFeature);
+    float spec = pow(max(dot(N, H), 0.0), 28.0);
+    float fresnel = pow(1.0 - max(dot(N, V), 0.0), 2.35);
+    float outerRim = uCustomMesh > 0.5 ? 1.0 : smoothstep(0.42, 0.94, length(fuv * vec2(1.06, 0.88)));
 
-    float wrapDiff = max((dot(N, Lkey) + 0.24) / 1.24, 0.0);
-    float fresnel = pow(1.0 - max(dot(N, V), 0.0), 2.65);
-    // Concentrate strong crimson/cyan Fresnel rim on the outer mask silhouette (keeps sculpted nose clean porcelain!)
-    float outerRim = uCustomMesh > 0.5 ? 1.0 : smoothstep(0.38, 0.90, length(fuv * vec2(1.08, 0.88)));
-    float rimFade = mix(0.14, 1.0, outerRim);
+    // 3D Binary Matrix Grid mapped cleanly onto the 3D mask coordinates
+    vec2 mUv = uCustomMesh > 0.5 ? (vLocal.xy * 0.48 + 0.5) : vUv;
+    vec2 grid = vec2(30.0, 34.0);
+    vec2 cell = floor(mUv * grid);
+    vec2 local = fract(mUv * grid);
 
-    vec3 col = albedo * (0.14 + 0.60 * wrapDiff + 0.16 * diffKey);
-    col += vec3(0.98, 0.98, 1.0) * spec;
-    col += rimCyan * (diffRim1 * 0.24 * rimFade + fresnel * rimFade * (0.78 + 0.42 * smoothstep(-0.2, 0.6, -N.x)));
-    col += rimRed  * (diffRim2 * 0.20 * rimFade + fresnel * rimFade * (0.62 + 0.42 * smoothstep(-0.2, 0.6,  N.x)));
+    // Downward cascading Matrix streams per column across the 3D face
+    float colHash = hash11(cell.x * 13.7 + 1.9);
+    float spdMult = (uState == 2) ? 1.75 : 1.0;
+    float colSpeed = (2.4 + fract(colHash * 7.31) * 3.6) * spdMult;
+    float headPos = colHash * 24.0 + uTime * colSpeed;
+    float period = 16.0;
+    float trail = 1.0 - fract((headPos - cell.y) / period);
+    float streamGlow = smoothstep(0.25, 0.96, trail);
+    float isLead = smoothstep(0.92, 0.992, trail);
 
-    float scan = 0.976 + 0.024 * sin(vLocal.y * 125.0 - uTime * 3.0);
-    col *= scan;
+    // Dynamic flipping 0 / 1 bit per 3D surface cell
+    float flipTick = floor(uTime * (1.8 + fract(colHash * 11.7) * 2.6) + hash21(cell) * 19.0);
+    float bit = step(0.5, hash21(cell + vec2(0.0, flipTick * 0.73)));
 
+    // Sample dual-channel crisp 0/1 glyph atlas with continuous derivatives (zero cell-border mipmap seams!)
+    vec2 padUv = clamp(local, 0.04, 0.96);
+    vec2 guv = vec2((bit + padUv.x) * 0.5, padUv.y);
+    vec2 gdx = dFdx(mUv * grid) * vec2(0.5, 1.0);
+    vec2 gdy = dFdy(mUv * grid) * vec2(0.5, 1.0);
+    vec2 glyph = textureGrad(uGlyphTex, guv, gdx, gdy).rg;
+    float stroke = glyph.r;
+    float halo   = glyph.g;
+
+    // 3D sculpted luminance drives how brightly each 1 and 0 burns across the 3D face!
+    float sculpt3D = (0.14 + 0.68 * wrapDiff + 0.22 * diffFill + 0.36 * pow(diffKey, 1.5)) * ao;
+    float rimBoost = fresnel * mix(0.25, 1.0, outerRim);
+    float intensity = sculpt3D * (0.58 + 0.62 * streamGlow) + spec * 0.55 + rimBoost * 0.92;
+
+    // Color ramp: deep blood-ruby in shadowed contours -> blazing scarlet -> incandescent white-pink on peaks/leads
+    vec3 digitCol = mix(colDeep, colMid, clamp(intensity * 0.95, 0.0, 1.0));
+    float hotAmt = clamp(isLead * 0.78 + spec * 0.68 + smoothstep(0.95, 1.55, intensity) * 0.65, 0.0, 1.0);
+    digitCol = mix(digitCol, colHot, hotAmt);
+
+    // Dark obsidian holographic substrate between digits (prevents visual soup & frames 3D silhouette)
+    vec3 baseShell = vec3(0.020, 0.003, 0.006)
+      + colDeep * (0.09 * sculpt3D + 0.26 * rimBoost)
+      + colMid  * (0.28 * pow(rimBoost, 1.5));
+
+    // Composite crisp glowing 1/0 digits + neon bloom halo over sculpted dark hologram shell
+    vec3 binaryFace = baseShell
+      + digitCol * halo * (0.42 * intensity)
+      + digitCol * stroke * (1.28 * max(0.32, intensity));
+
+    // Carve iconic Guy Fawkes eyebrows, curled handlebar mustache, smile & pointed goatee in pure dark void
+    vec3 carvedCol = vec3(0.008, 0.001, 0.002) + colDeep * (0.04 * rimBoost);
+    vec3 col = mix(binaryFace, carvedCol, carvedVoid);
+
+    // Subtle hologram scanline shimmer
+    col *= (0.96 + 0.04 * sin(vLocal.y * 140.0 - uTime * 3.5));
+
+    // RECON sweeping laser scan across the 3D binary face
     if (uState == 1) {
       float beamY = sin(uTime * 1.9) * 1.05;
-      float beam = exp(-pow((vLocal.y - beamY) / 0.08, 2.0));
-      col += (uRedTheme > 0.5 ? vec3(1.0, 0.16, 0.26) : vec3(0.08, 0.88, 1.0)) * beam * 0.72;
+      float beam = exp(-pow((vLocal.y - beamY) / 0.075, 2.0));
+      col += mix(colMid, colHot, stroke) * beam * (0.45 + 0.95 * stroke) * (1.0 - carvedVoid * 0.75);
     }
+    // ALERT crimson edge pulse
     if (uState == 2) {
       float pulse = 0.5 + 0.5 * sin(uTime * 6.0);
-      col += vec3(1.0, 0.08, 0.16) * (fresnel * rimFade * 0.92 * pulse + 0.04);
+      col += colMid * (rimBoost * 0.85 * pulse + stroke * 0.14 * pulse) * (1.0 - carvedVoid);
     }
 
     if (!gl_FrontFacing) {
-      col = mix(vec3(0.04, 0.01, 0.02), rimCyan * 0.35, fresnel);
+      col = vec3(0.02, 0.003, 0.006) + colDeep * (0.25 + 0.4 * stroke) * fresnel;
     }
 
-    outColor = vec4(col, 0.99);
+    // Solid-yet-holographic alpha (crisp digits at 0.99, obsidian shell at 0.90)
+    float alpha = mix(0.90, 0.99, clamp(stroke + rimBoost * 0.8 + carvedVoid * 0.6, 0.0, 1.0));
+    outColor = vec4(col, alpha);
   }`;
 
   const PT_VS = `#version 300 es
@@ -549,7 +627,7 @@
     let matrixDrops = [];
     let matrixCols = 0;
 
-    let progMask = null, progPt = null, vaoMask = null, vaoPt = null, texMask = null;
+    let progMask = null, progPt = null, vaoMask = null, vaoPt = null, texMask = null, texGlyph = null;
     let indexCount = 0;
     let ptCount = 1400;
 
@@ -593,6 +671,16 @@
       texMask = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, texMask);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texCanvas);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+      const glyphCanvas = buildBinaryGlyphAtlas();
+      texGlyph = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, texGlyph);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, glyphCanvas);
       gl.generateMipmap(gl.TEXTURE_2D);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -816,6 +904,9 @@
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, texMask);
         gl.uniform1i(gl.getUniformLocation(progMask, 'uTex'), 0);
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, texGlyph);
+        gl.uniform1i(gl.getUniformLocation(progMask, 'uGlyphTex'), 1);
 
         gl.bindVertexArray(vaoMask);
         gl.drawElements(gl.TRIANGLES, indexCount, gl.UNSIGNED_INT, 0);
