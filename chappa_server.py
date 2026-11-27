@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 import queue
+import re
 import socket
 import sqlite3
 import ssl
@@ -498,6 +499,124 @@ def defensive_posture_check(host: str) -> dict[str, Any]:
     return {"ok": True, "report": report, "case": triage["case"], "status": get_status()}
 
 
+def record_tool_run(tool_id: str, result: dict[str, Any]) -> None:
+    """Persist one execution attempt and broadcast it on the SSE bus.
+
+    A refused request is stored too — an attempt that the gate stopped is
+    evidence, and an empty audit trail would make refusals indistinguishable
+    from requests that never happened.
+    """
+    tool = chappa_tools.get_tool(tool_id) or {}
+    if not result.get("dry_run"):
+        output = (result.get("stdout") or "") + (("\n" + result["stderr"]) if result.get("stderr") else "")
+        if result.get("error"):
+            output = f"[error] {result['error']}\n" + output
+        with _DB_LOCK:
+            conn = _db()
+            try:
+                conn.execute(
+                    "INSERT INTO tool_runs(tool_id, title, team, argv, exit_code, duration_ms, output, created_at) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        tool_id,
+                        tool.get("title", "")[:120],
+                        tool.get("team", "")[:16],
+                        " ".join(result.get("argv") or [])[:400],
+                        result.get("exit_code"),
+                        result.get("duration_ms"),
+                        output[:4000],
+                        time.time(),
+                    ),
+                )
+                conn.commit()
+            finally:
+                conn.close()
+    _broadcast(
+        "tool_run",
+        {
+            "tool_id": tool_id,
+            "title": tool.get("title", ""),
+            "team": tool.get("team", ""),
+            "ok": bool(result.get("ok")),
+            "error": result.get("error", ""),
+            "argv": result.get("argv", []),
+            "exit_code": result.get("exit_code"),
+        },
+    )
+
+
+_TOOL_DIRECTIVE = re.compile(r"\[\[\s*(search|run)\b\s*([^\]]*)\]\]", re.I)
+
+
+def tool_briefing() -> str:
+    """The tool section injected into the agent's prompt.
+
+    The manifest is categories, not all 315 titles: a full listing would crowd
+    out the conversation, and `[[search]]` is one cheap hop away.
+    """
+    stats = chappa_tools.stats()
+    counts = stats.get("counts") or {}
+    cats = chappa_tools.list_tools(limit=1).get("categories") or []
+    index = "; ".join(f"{c['title']} [{c['team']}]" for c in cats)
+    return (
+        f"Tool catalog: {counts.get('tools', 0)} tools "
+        f"({counts.get('red', 0)} red, {counts.get('blue', 0)} blue, {counts.get('both', 0)} dual-use).\n"
+        f"Categories: {index}\n"
+        "To act, emit ONE directive, alone on its own line:\n"
+        "  [[search <keywords>]]           find tools by name, tag, or category\n"
+        "  [[run <tool_id> key=value ...]] run a catalog tool; key=value fills its declared <slots>\n"
+        "Red and dual-use runs are refused unless the red-team switch is on, a target is recorded, "
+        f"and the state is not IDLE. Never invent a tool id — search first."
+    )
+
+
+def _parse_run_args(text: str) -> tuple[str, dict[str, str]]:
+    parts = text.split()
+    if not parts:
+        return "", {}
+    params: dict[str, str] = {}
+    for token in parts[1:]:
+        if "=" in token:
+            key, val = token.split("=", 1)
+            params[key.strip()] = val.strip()
+    return parts[0], params
+
+
+def execute_directive(kind: str, arg: str, *, state: str, target: str) -> dict[str, Any]:
+    """Run a `[[search]]`/`[[run]]` directive through the same gate as the API."""
+    kind = kind.lower()
+    if kind == "search":
+        res = chappa_tools.list_tools(q=arg.strip(), limit=8)
+        return {
+            "ok": True,
+            "kind": "search",
+            "query": arg.strip(),
+            "matches": [
+                {"id": t["id"], "title": t["title"], "team": t["team"], "params": t.get("params") or []}
+                for t in res.get("tools") or []
+            ],
+        }
+    tool_id, params = _parse_run_args(arg)
+    result = chappa_tools.run_tool(tool_id, params=params, state=state, active_target=target)
+    result["kind"] = "run"
+    result["tool_id"] = tool_id
+    record_tool_run(tool_id, result)
+    return result
+
+
+def _directive_summary(res: dict[str, Any]) -> str:
+    if res.get("kind") == "search":
+        lines = [f"[Tools matching '{res.get('query', '')}']"]
+        for match in res.get("matches") or []:
+            slots = f" params={','.join(match['params'])}" if match.get("params") else ""
+            lines.append(f"- {match['title']} ({match['id']}) [{match['team']}]{slots}")
+        return "\n".join(lines) if len(lines) > 1 else f"[no tools matched '{res.get('query', '')}']"
+    if res.get("ok"):
+        head = (res.get("stdout") or "").strip()[:700]
+        return f"[Tool {res.get('tool_id')} · exit {res.get('exit_code')} · {res.get('duration_ms')}ms]\n{head}"
+    return f"[Tool {res.get('tool_id')} refused/failed] {res.get('error', '')}"
+
+
 def handle_chat(payload: dict[str, Any]) -> dict[str, Any]:
     text = str(payload.get("message") or payload.get("task") or payload.get("prompt") or "").strip()
     model = str(payload.get("model") or "").strip()
@@ -540,14 +659,44 @@ def handle_chat(payload: dict[str, Any]) -> dict[str, Any]:
         action_note = f"\n[Vigil SOC Case #{tr['case']['id']} · {tr['case']['mitre']}]"
 
     cur_status = get_status()
-    ai_reply = hermes_complete(
+    system_prompt = (
         "You are Chappa V2, a standalone local-first defensive Cybersecurity Agent built on Hermes, "
-        "combining Vigil AI SOC and God's Eye View 3D Globe. Keep answers sharp, tactical, and concise.\n"
-        f"Current State: {cur_status['mask_state']} | Open Vigil Cases: {cur_status['open_alerts']} | Active Target: {cur_status['active_target'] or 'none'}\n"
-        f"User: {text}",
-        model=model,
+        "combining Vigil AI SOC, God's Eye View 3D Globe and a dual-use red/blue tool catalog. "
+        "Keep answers sharp, tactical, and concise.\n"
+        f"Current State: {cur_status['mask_state']} | Open Vigil Cases: {cur_status['open_alerts']} | "
+        f"Active Target: {cur_status['active_target'] or 'none'}\n"
+        + tool_briefing()
+        + f"\nUser: {text}"
     )
-    reply = (ai_reply or f"[Chappa V2 · Hermes Core] Processed '{text}'. Vigil SOC ({cur_status['open_alerts']} open) & God's Eye View ({cur_status['pins_count']} pins) synced.") + action_note
+    ai_reply = hermes_complete(system_prompt, model=model)
+
+    # Directives may come from the model or be typed by the operator; both go
+    # through execute_directive, so the chat surface cannot bypass the run gate.
+    directives = _TOOL_DIRECTIVE.findall(ai_reply or "") or _TOOL_DIRECTIVE.findall(text)
+    tool_notes = [
+        _directive_summary(
+            execute_directive(kind, arg, state=cur_status["mask_state"], target=cur_status["active_target"])
+        )
+        for kind, arg in directives[:2]
+    ]
+    if tool_notes:
+        follow = (
+            system_prompt
+            + "\n\nTool results:\n"
+            + "\n\n".join(tool_notes)
+            + "\n\nAnswer the operator in at most three sentences. Do not emit another directive."
+        )
+        second = hermes_complete(follow, model=model)
+        if second:
+            ai_reply = second
+
+    fallback = (
+        f"[Chappa V2 · Hermes Core] Processed '{text}'. "
+        f"Vigil SOC ({cur_status['open_alerts']} open) & God's Eye View ({cur_status['pins_count']} pins) synced."
+    )
+    reply = (ai_reply or fallback) + action_note
+    if tool_notes:
+        reply += "\n\n" + "\n\n".join(tool_notes)
 
     with _DB_LOCK:
         conn = _db()
@@ -749,52 +898,14 @@ class ChappaHandler(BaseHTTPRequestHandler):
             result = chappa_tools.run_tool(
                 tool_id,
                 command=body.get("command"),
+                params=body.get("params") if isinstance(body.get("params"), dict) else None,
                 timeout_s=timeout_s,
                 dry_run=bool(body.get("dry_run")),
                 state=st["mask_state"],
                 active_target=st["active_target"],
                 allow_red=body.get("allow_red") if "allow_red" in body else None,
             )
-            # Only real executions are audited; a refused request leaves a
-            # record of the attempt instead of polluting the run history.
-            if not result.get("dry_run"):
-                output = (result.get("stdout") or "") + (("\n" + result["stderr"]) if result.get("stderr") else "")
-                if result.get("error"):
-                    # A refused or failed attempt is still evidence: keep the
-                    # reason next to the argv instead of an empty output cell.
-                    output = f"[error] {result['error']}\n" + output
-                with _DB_LOCK:
-                    conn = _db()
-                    try:
-                        conn.execute(
-                            "INSERT INTO tool_runs(tool_id, title, team, argv, exit_code, duration_ms, output, created_at) "
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                            (
-                                tool_id,
-                                tool.get("title", "")[:120],
-                                tool.get("team", "")[:16],
-                                " ".join(result.get("argv") or [])[:400],
-                                result.get("exit_code"),
-                                result.get("duration_ms"),
-                                output[:4000],
-                                time.time(),
-                            ),
-                        )
-                        conn.commit()
-                    finally:
-                        conn.close()
-            _broadcast(
-                "tool_run",
-                {
-                    "tool_id": tool_id,
-                    "title": tool.get("title", ""),
-                    "team": tool.get("team", ""),
-                    "ok": bool(result.get("ok")),
-                    "error": result.get("error", ""),
-                    "argv": result.get("argv", []),
-                    "exit_code": result.get("exit_code"),
-                },
-            )
+            record_tool_run(tool_id, result)
             return self._send_json(result)
 
         if path in ("/api/chappa/chat", "/api/chappa/command"):

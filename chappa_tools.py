@@ -43,9 +43,15 @@ _SECRET_ENV = re.compile(r"KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH", re
 
 # A catalog command containing any of these is either a placeholder template
 # (`nmap <target>`) or relies on shell semantics (pipes, redirects, chaining).
-# Both are refused rather than guessed at: running them through a shell would
-# reintroduce exactly the injection surface this module exists to remove.
+# Placeholders are parameter slots and get substituted; shell syntax is refused
+# outright, because running it through a shell would reintroduce exactly the
+# injection surface this module exists to remove.
 _SHELL_META = re.compile(r"[|&;<>`$]|\$\(")
+PLACEHOLDER_RE = re.compile(r"<([A-Za-z][A-Za-z0-9_\-]{0,31})>")
+
+# Parameter values are the only operator-supplied text that reaches a subprocess,
+# so they are restricted to characters that cannot change the command shape.
+_PARAM_VALUE = re.compile(r"^[A-Za-z0-9._:/@%=+\\-]{1,200}$")
 
 _cache: dict[str, Any] = {"mtime": None, "data": None}
 
@@ -171,6 +177,7 @@ def _clean_env() -> dict[str, str]:
 def run_tool(
     tool_id: str,
     command: str | None = None,
+    params: dict[str, Any] | None = None,
     timeout_s: int = DEFAULT_TIMEOUT_S,
     dry_run: bool = False,
     state: str = "IDLE",
@@ -183,6 +190,10 @@ def run_tool(
     or a `usage` example). Omitting it selects the entry's first runnable
     command. The binary of the chosen command must be in the entry's own
     command set, which is what makes the catalog an allowlist.
+
+    ``params`` fills the entry's declared ``<slots>``. Slot names come from the
+    catalog, values are charset-restricted, and for red-team entries the final
+    argv must still contain the recorded engagement target.
     """
     tool = get_tool(tool_id)
     if tool is None:
@@ -196,7 +207,23 @@ def run_tool(
 
     declared = [c for c in (tool.get("run") or [])]
     usage_cmds = [u[1] for u in (tool.get("usage") or []) if len(u) == 2]
-    chosen = command or (declared[0] if declared else (usage_cmds[0] if usage_cmds else ""))
+    candidates = declared + usage_cmds
+    wanted = {str(k) for k, v in (params or {}).items() if v}
+    if command:
+        chosen = command
+    elif wanted:
+        # Prefer a command whose slots are exactly covered by what the caller
+        # filled, so `params={target: ...}` selects the parameterized variant.
+        chosen = next(
+            (
+                c
+                for c in candidates
+                if PLACEHOLDER_RE.findall(c) and set(PLACEHOLDER_RE.findall(c)) <= wanted
+            ),
+            candidates[0] if candidates else "",
+        )
+    else:
+        chosen = candidates[0] if candidates else ""
     if not chosen:
         return {
             "ok": False,
@@ -206,17 +233,65 @@ def run_tool(
         }
     if chosen not in declared + usage_cmds:
         return {"ok": False, "error": "command is not declared by this catalog entry"}
-    if _SHELL_META.search(chosen):
-        return {
-            "ok": False,
-            "error": "this command is a template or uses shell syntax (pipe/redirect/placeholder); "
-            "chappa will not run it through a shell",
-            "command": chosen,
-            "hint": "add a concrete argv entry for this tool, or run the documented command yourself",
-        }
+
+    # ── parameter substitution ───────────────────────────────────────────────
+    # Slots come from the catalog itself (`<target>`), never from the caller:
+    # an unknown parameter name cannot invent a new slot.
+    slots = PLACEHOLDER_RE.findall(chosen)
+    provided = {str(k): str(v) for k, v in (params or {}).items()}
+    if slots:
+        missing = [name for name in slots if not provided.get(name)]
+        if missing:
+            return {
+                "ok": False,
+                "error": f"missing parameters: {', '.join(missing)}",
+                "params_required": slots,
+                "command": chosen,
+            }
+        for name in slots:
+            value = provided[name]
+            if not _PARAM_VALUE.match(value):
+                return {
+                    "ok": False,
+                    "error": f"parameter '{name}' contains characters that are not allowed "
+                    "(letters, digits, . _ : / @ % = + - only, max 200)",
+                    "params_required": slots,
+                }
+        filled = chosen
+        for name in slots:
+            filled = filled.replace(f"<{name}>", provided[name])
+        if _SHELL_META.search(filled) or any(c in filled for c in "\r\n\t"):
+            return {"ok": False, "error": "substituted command contains shell syntax", "argv_preview": filled}
+    else:
+        filled = chosen
+        if _SHELL_META.search(filled):
+            return {
+                "ok": False,
+                "error": "this command uses shell syntax (pipe/redirect/chaining); "
+                "chappa will not run it through a shell",
+                "command": chosen,
+                "hint": "add a concrete argv entry for this tool, or run the documented command yourself",
+            }
+
+    # Red-team scope: whatever the operator recorded as the engagement target
+    # must appear in the argv, so a stray parameter cannot retarget the run.
+    # Pure introspection (`--help`, `--version`) touches no target and is
+    # allowed — otherwise a red-team tool could not even be inspected.
+    introspection = any(
+        arg in {"--help", "-h", "-help", "--version", "-v", "-V", "help", "version"}
+        for arg in filled.split()[1:]
+    )
+    if tool.get("team") in ("red", "both") and active_target and not introspection:
+        if active_target.lower() not in " ".join(filled.split()).lower():
+            return {
+                "ok": False,
+                "error": f"target scope: the command must contain the recorded target '{active_target}'",
+                "argv_preview": filled,
+                "hint": "pass the target as a parameter (key=value) or record it as the active target",
+            }
 
     try:
-        argv = shlex.split(chosen, posix=True)
+        argv = shlex.split(filled, posix=True)
     except ValueError as exc:
         return {"ok": False, "error": f"unparseable command: {exc}"}
 

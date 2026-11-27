@@ -308,3 +308,33 @@ body::before {
   font-size: 13px;
 }
 .ch-dock-input::placeholder { color: #a87682; }
+
+/* ── unified red/blue tool plane ─────────────────────────────────────── */
+.ch-tool-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 6px 8px;
+  text-align: left;
+  border-left: 2px solid transparent;
+}
+.ch-tool-row.team-red { border-left-color: #e2384f; }
+.ch-tool-row.team-blue { border-left-color: #35b7ff; }
+.ch-tool-row.team-both { border-left-color: #f0b429; }
+.ch-tool-name { font-weight: 600; }
+.ch-tool-meta {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #a87682;
+}
+.ch-tool-cmdrow { align-items: center; gap: 6px; }
+.ch-tool-cmd {
+  flex: 1 1 auto;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #ffd7de;
+  overflow-wrap: anywhere;
+}

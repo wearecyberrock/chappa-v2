@@ -23,7 +23,7 @@ Current catalog: **315 tools in 39 categories — 253 red, 46 blue, 16 dual-use*
 | Endpoint | Purpose |
 |---|---|
 | `GET /api/chappa/tools` | filter by `team=red\|blue\|both`, `category=`, `phase=`, `q=` |
-| `POST /api/chappa/tools/run` | `{id, command?, timeout_s?, dry_run?, allow_red?}` |
+| `POST /api/chappa/tools/run` | `{id, command?, params?, timeout_s?, dry_run?, allow_red?}` |
 | `GET /api/chappa/tools/runs?limit=20` | audit trail |
 
 Execution rules, enforced in `chappa_tools.py`:
@@ -31,8 +31,14 @@ Execution rules, enforced in `chappa_tools.py`:
 - **No shell, ever** — a command is parsed to argv and run with `shell=False`.
 - **The catalog is the allowlist** — an entry may only run a binary it already declares.
 - **Blue always runs; red needs an engagement** — `CHAPPA_ALLOW_RED=1`, a recorded `active_target`, and a state other than `IDLE`.
-- **Templates are refused** — commands containing pipes, redirects, or `<placeholders>` are rejected rather than handed to a shell.
+- **Templates are refused** — commands containing pipes or redirects are rejected rather than handed to a shell.
+- **Parameters are catalog-declared** — `<target>`-style slots come from the entry, values are restricted to `[A-Za-z0-9._:/@%=+\-]`, and a red-team run must still contain the recorded target (help/version introspection excepted).
 - **Everything is audited** — accepted and refused attempts land in the SQLite `tool_runs` table and on the SSE bus as `tool_run`.
+
+### Reaching the tools
+
+- **Agent:** the chat prompt carries a catalog briefing; the agent (or the operator typing directly) issues `[[search <keywords>]]` or `[[run <tool_id> key=value ...]]`. Chat directives pass the same gate as the HTTP API, so the model cannot bypass authorization.
+- **UI:** the **Tools** drawer pane browses the catalog with team filters and search, exposes each entry's declared parameters, and offers Dry/Run with live output.
 
 Rebuild after changing a catalog file:
 

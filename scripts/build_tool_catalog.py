@@ -74,6 +74,10 @@ PHASE_TAGS = (
     "vulnerability-management",
 )
 
+# `<target>` style slots a catalog command declares; the server fills these and
+# nothing else (the slot list is the whole contract between UI and executor).
+PLACEHOLDER_RE = re.compile(r"<([A-Za-z][A-Za-z0-9_\-]{0,31})>")
+
 
 def slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-") or "unnamed"
@@ -350,6 +354,14 @@ def build() -> dict:
                 rec["id"] = f"{base}-{used[base]}"
             else:
                 used[base] = 1
+            # Parameter slots come from the catalog's own commands; the server
+            # only fills slots that are declared here.
+            declared_cmds = list(rec.get("run") or []) + [
+                u[1] for u in (rec.get("usage") or []) if len(u) == 2
+            ]
+            rec["params"] = sorted(
+                {m for cmd in declared_cmds for m in PLACEHOLDER_RE.findall(str(cmd))}
+            )
             out_tools.append(rec)
         cat["tool_count"] = len(cat["tools"])
         if not cat["description"]:

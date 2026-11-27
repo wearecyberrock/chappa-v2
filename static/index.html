@@ -22,6 +22,7 @@
         </select>
         <button type="button" class="ch-btn" onclick="openDrawer('vigil')">Vigil SOC</button>
         <button type="button" class="ch-btn" onclick="openDrawer('globe')">God's Eye</button>
+        <button type="button" class="ch-btn" onclick="openDrawer('tools')">Tools</button>
         <button type="button" class="ch-btn" onclick="openDrawer('audit')">Posture Audit</button>
         <button type="button" class="ch-btn" onclick="openDrawer('chat')">Chat Log</button>
         <button type="button" id="voiceBtn" class="ch-btn on" title="Speak replies via Assimilis Fish Audio / Voice Studio (eyes glow live)" onclick="toggleVoice()">Voice: Fish/Studio</button>
@@ -89,6 +90,7 @@
           <div class="ch-drawer-tabs">
             <button type="button" class="ch-dtab" data-dtab="vigil" onclick="openDrawer('vigil')">Vigil SOC</button>
             <button type="button" class="ch-dtab" data-dtab="globe" onclick="openDrawer('globe')">God's Eye</button>
+            <button type="button" class="ch-dtab" data-dtab="tools" onclick="openDrawer('tools')">Tools</button>
             <button type="button" class="ch-dtab" data-dtab="audit" onclick="openDrawer('audit')">Posture</button>
             <button type="button" class="ch-dtab" data-dtab="modules" onclick="openDrawer('modules')">Modules</button>
             <button type="button" class="ch-dtab" data-dtab="chat" onclick="openDrawer('chat')">Chat</button>
@@ -153,6 +155,27 @@
             </form>
             <div class="ch-muted" style="margin:4px 0">Drop any custom <code>custom_mask.obj</code> into <code>~/.chappa/modules/</code> to override the 3D mask mesh without rebuilding the app.</div>
             <div id="modulesList" class="ch-list"></div>
+          </section>
+
+          <!-- Unified Red/Blue Tool Catalog Pane -->
+          <section id="pane-tools" class="ch-pane">
+            <div class="ch-k">UNIFIED TOOL CATALOG · RED + BLUE</div>
+            <div class="ch-row">
+              <select id="toolTeamFilter" class="ch-select" onchange="loadToolCatalog()">
+                <option value="all">ALL TEAMS</option>
+                <option value="red">RED</option>
+                <option value="blue">BLUE</option>
+                <option value="both">DUAL-USE</option>
+              </select>
+              <input id="toolSearch" class="ch-input" placeholder="search tools (name, tag, category)"
+                     onkeydown="if(event.key==='Enter'){event.preventDefault();loadToolCatalog();}">
+              <button type="button" class="ch-btn on" onclick="loadToolCatalog()">Search</button>
+            </div>
+            <div id="toolStatsLine" class="ch-muted"></div>
+            <div id="toolsList" class="ch-list"></div>
+            <div class="ch-k" style="margin-top:8px">SELECTED TOOL</div>
+            <div id="toolDetail" class="ch-list"><div class="ch-muted">Pick a tool to see its commands and parameters.</div></div>
+            <pre id="toolRunOutput" class="ch-pre">Run output appears here.</pre>
           </section>
 
           <!-- Full Hermes Chat Thread Pane -->

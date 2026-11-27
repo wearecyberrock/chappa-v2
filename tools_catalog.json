@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-11-27T13:05:57+00:00",
+  "generated_at": "2026-11-27T13:11:13+00:00",
   "source": {
     "hackingtool": "hackingtool_v2",
     "catalog_files": 29,
@@ -369,7 +369,8 @@
       "archived": false,
       "kind": "install",
       "category": "Active Directory Tools",
-      "category_id": "active-directory-tools"
+      "category_id": "active-directory-tools",
+      "params": []
     },
     {
       "id": "py/netexec-nxc-network-pentesting",
@@ -420,7 +421,10 @@
       "archived": false,
       "kind": "install",
       "category": "Active Directory Tools",
-      "category_id": "active-directory-tools"
+      "category_id": "active-directory-tools",
+      "params": [
+        "nthash"
+      ]
     },
     {
       "id": "py/impacket-network-protocol-tools",
@@ -471,7 +475,8 @@
       "archived": false,
       "kind": "install",
       "category": "Active Directory Tools",
-      "category_id": "active-directory-tools"
+      "category_id": "active-directory-tools",
+      "params": []
     },
     {
       "id": "py/responder-llmnr-nbt-ns-poisoner",
@@ -516,7 +521,8 @@
       "archived": false,
       "kind": "install",
       "category": "Active Directory Tools",
-      "category_id": "active-directory-tools"
+      "category_id": "active-directory-tools",
+      "params": []
     },
     {
       "id": "py/certipy-ad-certificate-abuse",
@@ -559,7 +565,8 @@
       "archived": false,
       "kind": "install",
       "category": "Active Directory Tools",
-      "category_id": "active-directory-tools"
+      "category_id": "active-directory-tools",
+      "params": []
     },
     {
       "id": "py/kerbrute-kerberos-brute-force",
@@ -603,7 +610,8 @@
       "archived": false,
       "kind": "install",
       "category": "Active Directory Tools",
-      "category_id": "active-directory-tools"
+      "category_id": "active-directory-tools",
+      "params": []
     },
     {
       "id": "yaml/ldapdomaindump-ad-ldap-dumper",
@@ -640,7 +648,8 @@
       "archived": false,
       "kind": "install",
       "category": "Active Directory Tools",
-      "category_id": "active-directory-tools"
+      "category_id": "active-directory-tools",
+      "params": []
     },
     {
       "id": "yaml/coercer-authentication-coercion",
@@ -678,7 +687,8 @@
       "archived": false,
       "kind": "install",
       "category": "Active Directory Tools",
-      "category_id": "active-directory-tools"
+      "category_id": "active-directory-tools",
+      "params": []
     },
     {
       "id": "yaml/pcredz-credential-extractor",
@@ -717,7 +727,8 @@
       "archived": false,
       "kind": "install",
       "category": "Active Directory Tools",
-      "category_id": "active-directory-tools"
+      "category_id": "active-directory-tools",
+      "params": []
     },
     {
       "id": "yaml/the-hacker-recipes-ad",
@@ -739,7 +750,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Active Directory Tools",
-      "category_id": "active-directory-tools"
+      "category_id": "active-directory-tools",
+      "params": []
     },
     {
       "id": "py/anonymously-surf",
@@ -784,7 +796,8 @@
       "archived": false,
       "kind": "install",
       "category": "Anonymously Hiding Tools",
-      "category_id": "anonymously-hiding-tools"
+      "category_id": "anonymously-hiding-tools",
+      "params": []
     },
     {
       "id": "py/multitor",
@@ -821,7 +834,8 @@
       "archived": false,
       "kind": "install",
       "category": "Anonymously Hiding Tools",
-      "category_id": "anonymously-hiding-tools"
+      "category_id": "anonymously-hiding-tools",
+      "params": []
     },
     {
       "id": "yaml/tor-torsocks-socks-anonymity-proxy",
@@ -862,7 +876,8 @@
       "archived": false,
       "kind": "install",
       "category": "Anonymously Hiding Tools",
-      "category_id": "anonymously-hiding-tools"
+      "category_id": "anonymously-hiding-tools",
+      "params": []
     },
     {
       "id": "yaml/proxychains-ng-chain-traffic-through-proxies-tor",
@@ -899,7 +914,8 @@
       "archived": false,
       "kind": "install",
       "category": "Anonymously Hiding Tools",
-      "category_id": "anonymously-hiding-tools"
+      "category_id": "anonymously-hiding-tools",
+      "params": []
     },
     {
       "id": "yaml/whonix-anonymity-tor-opsec-docs",
@@ -921,7 +937,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Anonymously Hiding Tools",
-      "category_id": "anonymously-hiding-tools"
+      "category_id": "anonymously-hiding-tools",
+      "params": []
     },
     {
       "id": "py/prowler-cloud-security-scanner",
@@ -970,7 +987,8 @@
       "archived": false,
       "kind": "install",
       "category": "Cloud Security Tools",
-      "category_id": "cloud-security-tools"
+      "category_id": "cloud-security-tools",
+      "params": []
     },
     {
       "id": "py/scoutsuite-multi-cloud-auditing",
@@ -1011,7 +1029,8 @@
       "archived": false,
       "kind": "install",
       "category": "Cloud Security Tools",
-      "category_id": "cloud-security-tools"
+      "category_id": "cloud-security-tools",
+      "params": []
     },
     {
       "id": "py/pacu-aws-exploitation-framework",
@@ -1040,7 +1059,8 @@
       "archived": false,
       "kind": "install",
       "category": "Cloud Security Tools",
-      "category_id": "cloud-security-tools"
+      "category_id": "cloud-security-tools",
+      "params": []
     },
     {
       "id": "py/trivy-container-k8s-scanner",
@@ -1085,7 +1105,8 @@
       "archived": false,
       "kind": "install",
       "category": "Cloud Security Tools",
-      "category_id": "cloud-security-tools"
+      "category_id": "cloud-security-tools",
+      "params": []
     },
     {
       "id": "yaml/checkov-iac-misconfig-scanner",
@@ -1126,7 +1147,8 @@
       "archived": false,
       "kind": "install",
       "category": "Cloud Security Tools",
-      "category_id": "cloud-security-tools"
+      "category_id": "cloud-security-tools",
+      "params": []
     },
     {
       "id": "yaml/hacktricks-cloud-cloud-pentest-playbook",
@@ -1148,7 +1170,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Cloud Security Tools",
-      "category_id": "cloud-security-tools"
+      "category_id": "cloud-security-tools",
+      "params": []
     },
     {
       "id": "yaml/flaws-cloud-aws-security-challenge",
@@ -1170,7 +1193,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Cloud Security Tools",
-      "category_id": "cloud-security-tools"
+      "category_id": "cloud-security-tools",
+      "params": []
     },
     {
       "id": "py/ddos",
@@ -1201,7 +1225,8 @@
       "archived": false,
       "kind": "install",
       "category": "DDOS Attack Tools",
-      "category_id": "ddos-attack-tools"
+      "category_id": "ddos-attack-tools",
+      "params": []
     },
     {
       "id": "py/slowloris",
@@ -1247,7 +1272,8 @@
       "archived": false,
       "kind": "install",
       "category": "DDOS Attack Tools",
-      "category_id": "ddos-attack-tools"
+      "category_id": "ddos-attack-tools",
+      "params": []
     },
     {
       "id": "py/asyncrone-multifunction-syn-flood-ddos-weapon",
@@ -1268,7 +1294,8 @@
       "archived": true,
       "kind": "install",
       "category": "DDOS Attack Tools",
-      "category_id": "ddos-attack-tools"
+      "category_id": "ddos-attack-tools",
+      "params": []
     },
     {
       "id": "py/ufonet",
@@ -1301,7 +1328,8 @@
       "archived": false,
       "kind": "install",
       "category": "DDOS Attack Tools",
-      "category_id": "ddos-attack-tools"
+      "category_id": "ddos-attack-tools",
+      "params": []
     },
     {
       "id": "py/goldeneye",
@@ -1327,7 +1355,10 @@
       "archived": true,
       "kind": "install",
       "category": "DDOS Attack Tools",
-      "category_id": "ddos-attack-tools"
+      "category_id": "ddos-attack-tools",
+      "params": [
+        "url"
+      ]
     },
     {
       "id": "py/saphyraddos",
@@ -1353,7 +1384,8 @@
       "archived": false,
       "kind": "install",
       "category": "DDOS Attack Tools",
-      "category_id": "ddos-attack-tools"
+      "category_id": "ddos-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/hping3-packet-crafter-flooder",
@@ -1401,7 +1433,8 @@
       "archived": false,
       "kind": "install",
       "category": "DDOS Attack Tools",
-      "category_id": "ddos-attack-tools"
+      "category_id": "ddos-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/slowhttptest-slow-http-dos-tester",
@@ -1445,7 +1478,8 @@
       "archived": false,
       "kind": "install",
       "category": "DDOS Attack Tools",
-      "category_id": "ddos-attack-tools"
+      "category_id": "ddos-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/owasp-denial-of-service-cheat-sheet",
@@ -1467,7 +1501,8 @@
       "archived": false,
       "kind": "resource",
       "category": "DDOS Attack Tools",
-      "category_id": "ddos-attack-tools"
+      "category_id": "ddos-attack-tools",
+      "params": []
     },
     {
       "id": "py/routersploit",
@@ -1513,7 +1548,8 @@
       "archived": false,
       "kind": "install",
       "category": "Exploit framework",
-      "category_id": "exploit-framework"
+      "category_id": "exploit-framework",
+      "params": []
     },
     {
       "id": "py/websploit",
@@ -1537,7 +1573,8 @@
       "archived": true,
       "kind": "install",
       "category": "Exploit framework",
-      "category_id": "exploit-framework"
+      "category_id": "exploit-framework",
+      "params": []
     },
     {
       "id": "py/commix",
@@ -1582,7 +1619,8 @@
       "archived": false,
       "kind": "install",
       "category": "Exploit framework",
-      "category_id": "exploit-framework"
+      "category_id": "exploit-framework",
+      "params": []
     },
     {
       "id": "py/web2attack",
@@ -1605,7 +1643,8 @@
       "archived": true,
       "kind": "install",
       "category": "Exploit framework",
-      "category_id": "exploit-framework"
+      "category_id": "exploit-framework",
+      "params": []
     },
     {
       "id": "yaml/metasploit-framework",
@@ -1660,7 +1699,8 @@
       "archived": false,
       "kind": "install",
       "category": "Exploit framework",
-      "category_id": "exploit-framework"
+      "category_id": "exploit-framework",
+      "params": []
     },
     {
       "id": "yaml/searchsploit-exploit-db-cli",
@@ -1705,7 +1745,8 @@
       "archived": false,
       "kind": "install",
       "category": "Exploit framework",
-      "category_id": "exploit-framework"
+      "category_id": "exploit-framework",
+      "params": []
     },
     {
       "id": "yaml/exploit-db-online-archive",
@@ -1727,7 +1768,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Exploit framework",
-      "category_id": "exploit-framework"
+      "category_id": "exploit-framework",
+      "params": []
     },
     {
       "id": "yaml/metasploit-unleashed-free-course",
@@ -1749,7 +1791,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Exploit framework",
-      "category_id": "exploit-framework"
+      "category_id": "exploit-framework",
+      "params": []
     },
     {
       "id": "py/autopsy",
@@ -1777,7 +1820,8 @@
       "archived": false,
       "kind": "install",
       "category": "Forensic tools",
-      "category_id": "forensic-tools"
+      "category_id": "forensic-tools",
+      "params": []
     },
     {
       "id": "py/wireshark",
@@ -1827,7 +1871,8 @@
       "archived": false,
       "kind": "install",
       "category": "Forensic tools",
-      "category_id": "forensic-tools"
+      "category_id": "forensic-tools",
+      "params": []
     },
     {
       "id": "py/bulk-extractor",
@@ -1862,7 +1907,8 @@
       "archived": false,
       "kind": "install",
       "category": "Forensic tools",
-      "category_id": "forensic-tools"
+      "category_id": "forensic-tools",
+      "params": []
     },
     {
       "id": "py/disk-clone-and-iso-image-acquire",
@@ -1890,7 +1936,10 @@
       "archived": false,
       "kind": "install",
       "category": "Forensic tools",
-      "category_id": "forensic-tools"
+      "category_id": "forensic-tools",
+      "params": [
+        "device"
+      ]
     },
     {
       "id": "py/toolsley",
@@ -1912,7 +1961,8 @@
       "archived": false,
       "kind": "install",
       "category": "Forensic tools",
-      "category_id": "forensic-tools"
+      "category_id": "forensic-tools",
+      "params": []
     },
     {
       "id": "py/volatility-3-memory-forensics",
@@ -1955,7 +2005,8 @@
       "archived": false,
       "kind": "install",
       "category": "Forensic tools",
-      "category_id": "forensic-tools"
+      "category_id": "forensic-tools",
+      "params": []
     },
     {
       "id": "py/binwalk-firmware-analysis",
@@ -1996,7 +2047,8 @@
       "archived": false,
       "kind": "install",
       "category": "Forensic tools",
-      "category_id": "forensic-tools"
+      "category_id": "forensic-tools",
+      "params": []
     },
     {
       "id": "py/pspy-process-monitor-no-root",
@@ -2033,7 +2085,8 @@
       "archived": false,
       "kind": "install",
       "category": "Forensic tools",
-      "category_id": "forensic-tools"
+      "category_id": "forensic-tools",
+      "params": []
     },
     {
       "id": "yaml/exiftool-metadata",
@@ -2079,7 +2132,8 @@
       "archived": false,
       "kind": "install",
       "category": "Forensic tools",
-      "category_id": "forensic-tools"
+      "category_id": "forensic-tools",
+      "params": []
     },
     {
       "id": "yaml/foremost-file-carving",
@@ -2115,7 +2169,8 @@
       "archived": false,
       "kind": "install",
       "category": "Forensic tools",
-      "category_id": "forensic-tools"
+      "category_id": "forensic-tools",
+      "params": []
     },
     {
       "id": "yaml/eric-zimmerman-s-tools",
@@ -2137,7 +2192,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Forensic tools",
-      "category_id": "forensic-tools"
+      "category_id": "forensic-tools",
+      "params": []
     },
     {
       "id": "yaml/malwarebazaar-sample-database",
@@ -2159,7 +2215,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Forensic tools",
-      "category_id": "forensic-tools"
+      "category_id": "forensic-tools",
+      "params": []
     },
     {
       "id": "py/network-map-nmap",
@@ -2207,7 +2264,10 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": [
+        "target"
+      ]
     },
     {
       "id": "py/dracnmap",
@@ -2232,7 +2292,8 @@
       "archived": true,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": []
     },
     {
       "id": "py/port-scanning",
@@ -2254,7 +2315,8 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": []
     },
     {
       "id": "py/host-to-ip",
@@ -2276,7 +2338,8 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": []
     },
     {
       "id": "py/xerosploit",
@@ -2301,7 +2364,8 @@
       "archived": true,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": []
     },
     {
       "id": "py/red-hawk-all-in-one-scanning",
@@ -2326,7 +2390,8 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": []
     },
     {
       "id": "py/reconspider-for-all-scanning",
@@ -2350,7 +2415,8 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": []
     },
     {
       "id": "py/isitdown-check-website-down-up",
@@ -2372,7 +2438,8 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": []
     },
     {
       "id": "py/infoga-email-osint",
@@ -2401,7 +2468,10 @@
       "archived": true,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": [
+        "domain"
+      ]
     },
     {
       "id": "py/recondog",
@@ -2425,7 +2495,8 @@
       "archived": true,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": []
     },
     {
       "id": "py/striker",
@@ -2448,7 +2519,8 @@
       "archived": true,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": []
     },
     {
       "id": "py/secretfinder-like-api-etc",
@@ -2480,7 +2552,10 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": [
+        "target"
+      ]
     },
     {
       "id": "py/find-info-using-shodan",
@@ -2512,7 +2587,11 @@
       "archived": true,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": [
+        "ip",
+        "query"
+      ]
     },
     {
       "id": "py/port-scanner-rang3r",
@@ -2539,7 +2618,10 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": [
+        "target"
+      ]
     },
     {
       "id": "py/breacher",
@@ -2566,7 +2648,10 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": [
+        "target"
+      ]
     },
     {
       "id": "py/theharvester-osint",
@@ -2600,7 +2685,10 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": [
+        "domain"
+      ]
     },
     {
       "id": "py/amass-attack-surface-mapping",
@@ -2638,7 +2726,10 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": [
+        "domain"
+      ]
     },
     {
       "id": "py/masscan-fast-port-scanner",
@@ -2671,7 +2762,10 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": [
+        "ip-range"
+      ]
     },
     {
       "id": "py/rustscan-modern-port-scanner",
@@ -2704,7 +2798,10 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": [
+        "target"
+      ]
     },
     {
       "id": "py/holehe-email-social-accounts",
@@ -2738,7 +2835,10 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": [
+        "email"
+      ]
     },
     {
       "id": "py/maigret-username-osint",
@@ -2771,7 +2871,10 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": [
+        "username"
+      ]
     },
     {
       "id": "py/httpx-http-toolkit",
@@ -2805,7 +2908,8 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": []
     },
     {
       "id": "py/spiderfoot-osint-automation",
@@ -2834,7 +2938,8 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": []
     },
     {
       "id": "py/subfinder-subdomain-enumeration",
@@ -2868,7 +2973,10 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": [
+        "domain"
+      ]
     },
     {
       "id": "py/trufflehog-secret-scanner",
@@ -2905,7 +3013,11 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": [
+        "path",
+        "repo-url"
+      ]
     },
     {
       "id": "py/gitleaks-git-secret-scanner",
@@ -2938,7 +3050,10 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": [
+        "path"
+      ]
     },
     {
       "id": "yaml/naabu-fast-port-scanner",
@@ -2975,7 +3090,10 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": [
+        "target"
+      ]
     },
     {
       "id": "yaml/dnsx-dns-toolkit",
@@ -3012,7 +3130,8 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": []
     },
     {
       "id": "yaml/reconftw-automated-recon",
@@ -3059,7 +3178,8 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": []
     },
     {
       "id": "yaml/gowitness-web-screenshots",
@@ -3101,7 +3221,8 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": []
     },
     {
       "id": "yaml/eyewitness-web-screenshots-headers",
@@ -3143,7 +3264,8 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": []
     },
     {
       "id": "yaml/sn1per-attack-surface-scanner",
@@ -3190,7 +3312,8 @@
       "archived": false,
       "kind": "install",
       "category": "Information gathering tools",
-      "category_id": "information-gathering-tools"
+      "category_id": "information-gathering-tools",
+      "params": []
     },
     {
       "id": "py/mobsf-mobile-security-framework",
@@ -3225,7 +3348,8 @@
       "archived": false,
       "kind": "install",
       "category": "Mobile Security Tools",
-      "category_id": "mobile-security-tools"
+      "category_id": "mobile-security-tools",
+      "params": []
     },
     {
       "id": "py/frida-dynamic-instrumentation",
@@ -3266,7 +3390,8 @@
       "archived": false,
       "kind": "install",
       "category": "Mobile Security Tools",
-      "category_id": "mobile-security-tools"
+      "category_id": "mobile-security-tools",
+      "params": []
     },
     {
       "id": "py/objection-mobile-runtime-exploration",
@@ -3302,7 +3427,8 @@
       "archived": false,
       "kind": "install",
       "category": "Mobile Security Tools",
-      "category_id": "mobile-security-tools"
+      "category_id": "mobile-security-tools",
+      "params": []
     },
     {
       "id": "yaml/adb-android-debug-bridge",
@@ -3350,7 +3476,8 @@
       "archived": false,
       "kind": "install",
       "category": "Mobile Security Tools",
-      "category_id": "mobile-security-tools"
+      "category_id": "mobile-security-tools",
+      "params": []
     },
     {
       "id": "yaml/owasp-mas-mobile-app-security",
@@ -3372,7 +3499,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Mobile Security Tools",
-      "category_id": "mobile-security-tools"
+      "category_id": "mobile-security-tools",
+      "params": []
     },
     {
       "id": "yaml/frida-codeshare",
@@ -3395,7 +3523,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Mobile Security Tools",
-      "category_id": "mobile-security-tools"
+      "category_id": "mobile-security-tools",
+      "params": []
     },
     {
       "id": "py/hatcloud-bypass-cloudflare-for-ip",
@@ -3422,7 +3551,8 @@
       "archived": false,
       "kind": "install",
       "category": "Other tools",
-      "category_id": "other-tools"
+      "category_id": "other-tools",
+      "params": []
     },
     {
       "id": "yaml/cyberchef-cyber-swiss-army-knife",
@@ -3443,7 +3573,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Other tools",
-      "category_id": "other-tools"
+      "category_id": "other-tools",
+      "params": []
     },
     {
       "id": "py/keydroid",
@@ -3468,7 +3599,8 @@
       "archived": true,
       "kind": "install",
       "category": "Android Hacking tools",
-      "category_id": "android-hacking-tools"
+      "category_id": "android-hacking-tools",
+      "params": []
     },
     {
       "id": "py/mysms",
@@ -3492,7 +3624,8 @@
       "archived": false,
       "kind": "install",
       "category": "Android Hacking tools",
-      "category_id": "android-hacking-tools"
+      "category_id": "android-hacking-tools",
+      "params": []
     },
     {
       "id": "py/lockphish-grab-target-lock-pin",
@@ -3517,7 +3650,8 @@
       "archived": true,
       "kind": "install",
       "category": "Android Hacking tools",
-      "category_id": "android-hacking-tools"
+      "category_id": "android-hacking-tools",
+      "params": []
     },
     {
       "id": "py/droidcam-capture-image",
@@ -3541,7 +3675,8 @@
       "archived": true,
       "kind": "install",
       "category": "Android Hacking tools",
-      "category_id": "android-hacking-tools"
+      "category_id": "android-hacking-tools",
+      "params": []
     },
     {
       "id": "py/evilapp-hijack-session",
@@ -3566,7 +3701,8 @@
       "archived": true,
       "kind": "install",
       "category": "Android Hacking tools",
-      "category_id": "android-hacking-tools"
+      "category_id": "android-hacking-tools",
+      "params": []
     },
     {
       "id": "py/knockmail",
@@ -3591,7 +3727,8 @@
       "archived": true,
       "kind": "install",
       "category": "Email Verify tools",
-      "category_id": "email-verify-tools"
+      "category_id": "email-verify-tools",
+      "params": []
     },
     {
       "id": "py/hash-buster",
@@ -3616,7 +3753,8 @@
       "archived": false,
       "kind": "install",
       "category": "Hash cracking tools",
-      "category_id": "hash-cracking-tools"
+      "category_id": "hash-cracking-tools",
+      "params": []
     },
     {
       "id": "py/evilurl",
@@ -3640,7 +3778,8 @@
       "archived": true,
       "kind": "install",
       "category": "IDN Homograph Attack",
-      "category_id": "idn-homograph-attack"
+      "category_id": "idn-homograph-attack",
+      "params": []
     },
     {
       "id": "py/terminal-multiplexer",
@@ -3670,7 +3809,10 @@
       "archived": false,
       "kind": "install",
       "category": "Mix tools",
-      "category_id": "mix-tools"
+      "category_id": "mix-tools",
+      "params": [
+        "session"
+      ]
     },
     {
       "id": "py/crivo",
@@ -3691,7 +3833,8 @@
       "archived": false,
       "kind": "install",
       "category": "Mix tools",
-      "category_id": "mix-tools"
+      "category_id": "mix-tools",
+      "params": []
     },
     {
       "id": "py/debinject",
@@ -3714,7 +3857,8 @@
       "archived": true,
       "kind": "install",
       "category": "Payload Injector",
-      "category_id": "payload-injector"
+      "category_id": "payload-injector",
+      "params": []
     },
     {
       "id": "py/pixload",
@@ -3745,7 +3889,12 @@
       "archived": false,
       "kind": "install",
       "category": "Payload Injector",
-      "category_id": "payload-injector"
+      "category_id": "payload-injector",
+      "params": [
+        "input",
+        "output",
+        "payload"
+      ]
     },
     {
       "id": "py/instagram-attack",
@@ -3768,7 +3917,8 @@
       "archived": true,
       "kind": "install",
       "category": "SocialMedia Bruteforce",
-      "category_id": "socialmedia-bruteforce"
+      "category_id": "socialmedia-bruteforce",
+      "params": []
     },
     {
       "id": "py/allinone-socialmedia-attack",
@@ -3793,7 +3943,8 @@
       "archived": true,
       "kind": "install",
       "category": "SocialMedia Bruteforce",
-      "category_id": "socialmedia-bruteforce"
+      "category_id": "socialmedia-bruteforce",
+      "params": []
     },
     {
       "id": "py/facebook-attack",
@@ -3816,7 +3967,8 @@
       "archived": true,
       "kind": "install",
       "category": "SocialMedia Bruteforce",
-      "category_id": "socialmedia-bruteforce"
+      "category_id": "socialmedia-bruteforce",
+      "params": []
     },
     {
       "id": "py/application-checker",
@@ -3839,7 +3991,8 @@
       "archived": true,
       "kind": "install",
       "category": "SocialMedia Bruteforce",
-      "category_id": "socialmedia-bruteforce"
+      "category_id": "socialmedia-bruteforce",
+      "params": []
     },
     {
       "id": "py/find-socialmedia-by-facial-recognation-system",
@@ -3862,7 +4015,8 @@
       "archived": true,
       "kind": "install",
       "category": "SocialMedia Finder",
-      "category_id": "socialmedia-finder"
+      "category_id": "socialmedia-finder",
+      "params": []
     },
     {
       "id": "py/find-socialmedia-by-username",
@@ -3887,7 +4041,8 @@
       "archived": true,
       "kind": "install",
       "category": "SocialMedia Finder",
-      "category_id": "socialmedia-finder"
+      "category_id": "socialmedia-finder",
+      "params": []
     },
     {
       "id": "py/sherlock",
@@ -3914,7 +4069,10 @@
       "archived": false,
       "kind": "install",
       "category": "SocialMedia Finder",
-      "category_id": "socialmedia-finder"
+      "category_id": "socialmedia-finder",
+      "params": [
+        "username"
+      ]
     },
     {
       "id": "py/socialscan-username-or-email",
@@ -3942,7 +4100,10 @@
       "archived": false,
       "kind": "install",
       "category": "SocialMedia Finder",
-      "category_id": "socialmedia-finder"
+      "category_id": "socialmedia-finder",
+      "params": [
+        "user_or_email"
+      ]
     },
     {
       "id": "py/gospider",
@@ -3973,7 +4134,10 @@
       "archived": false,
       "kind": "install",
       "category": "Web crawling",
-      "category_id": "web-crawling"
+      "category_id": "web-crawling",
+      "params": [
+        "url"
+      ]
     },
     {
       "id": "py/wifijammer-ng",
@@ -3996,7 +4160,8 @@
       "archived": true,
       "kind": "install",
       "category": "Wifi Deauthenticate",
-      "category_id": "wifi-deauthenticate"
+      "category_id": "wifi-deauthenticate",
+      "params": []
     },
     {
       "id": "py/kawaiideauther",
@@ -4019,7 +4184,8 @@
       "archived": true,
       "kind": "install",
       "category": "Wifi Deauthenticate",
-      "category_id": "wifi-deauthenticate"
+      "category_id": "wifi-deauthenticate",
+      "params": []
     },
     {
       "id": "py/the-fatrat",
@@ -4049,7 +4215,8 @@
       "archived": false,
       "kind": "install",
       "category": "Payload creation tools",
-      "category_id": "payload-creation-tools"
+      "category_id": "payload-creation-tools",
+      "params": []
     },
     {
       "id": "py/brutal",
@@ -4073,7 +4240,8 @@
       "archived": true,
       "kind": "install",
       "category": "Payload creation tools",
-      "category_id": "payload-creation-tools"
+      "category_id": "payload-creation-tools",
+      "params": []
     },
     {
       "id": "py/stitch",
@@ -4103,7 +4271,8 @@
       "archived": false,
       "kind": "install",
       "category": "Payload creation tools",
-      "category_id": "payload-creation-tools"
+      "category_id": "payload-creation-tools",
+      "params": []
     },
     {
       "id": "py/msfvenom-payload-creator",
@@ -4136,7 +4305,14 @@
       "archived": true,
       "kind": "install",
       "category": "Payload creation tools",
-      "category_id": "payload-creation-tools"
+      "category_id": "payload-creation-tools",
+      "params": [
+        "fmt",
+        "ip",
+        "output",
+        "payload",
+        "port"
+      ]
     },
     {
       "id": "py/venom-shellcode-generator",
@@ -4165,7 +4341,8 @@
       "archived": false,
       "kind": "install",
       "category": "Payload creation tools",
-      "category_id": "payload-creation-tools"
+      "category_id": "payload-creation-tools",
+      "params": []
     },
     {
       "id": "py/spycam",
@@ -4189,7 +4366,8 @@
       "archived": true,
       "kind": "install",
       "category": "Payload creation tools",
-      "category_id": "payload-creation-tools"
+      "category_id": "payload-creation-tools",
+      "params": []
     },
     {
       "id": "py/mob-droid",
@@ -4219,7 +4397,8 @@
       "archived": false,
       "kind": "install",
       "category": "Payload creation tools",
-      "category_id": "payload-creation-tools"
+      "category_id": "payload-creation-tools",
+      "params": []
     },
     {
       "id": "py/enigma",
@@ -4242,7 +4421,8 @@
       "archived": true,
       "kind": "install",
       "category": "Payload creation tools",
-      "category_id": "payload-creation-tools"
+      "category_id": "payload-creation-tools",
+      "params": []
     },
     {
       "id": "yaml/msfvenom-payload-generator",
@@ -4292,7 +4472,8 @@
       "archived": false,
       "kind": "install",
       "category": "Payload creation tools",
-      "category_id": "payload-creation-tools"
+      "category_id": "payload-creation-tools",
+      "params": []
     },
     {
       "id": "yaml/lolbas-living-off-the-land-binaries",
@@ -4314,7 +4495,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Payload creation tools",
-      "category_id": "payload-creation-tools"
+      "category_id": "payload-creation-tools",
+      "params": []
     },
     {
       "id": "py/autophisher-rk",
@@ -4338,7 +4520,8 @@
       "archived": true,
       "kind": "install",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "py/pyphisher",
@@ -4362,7 +4545,8 @@
       "archived": true,
       "kind": "install",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "py/advphishing",
@@ -4391,7 +4575,8 @@
       "archived": false,
       "kind": "install",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "py/setoolkit",
@@ -4428,7 +4613,8 @@
       "archived": false,
       "kind": "install",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "py/socialfish",
@@ -4461,7 +4647,8 @@
       "archived": false,
       "kind": "install",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "py/hiddeneye",
@@ -4490,7 +4677,8 @@
       "archived": false,
       "kind": "install",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "py/evilginx3",
@@ -4544,7 +4732,12 @@
       "archived": false,
       "kind": "install",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": [
+        "id",
+        "phishlet",
+        "your-ip"
+      ]
     },
     {
       "id": "py/i-see-you",
@@ -4568,7 +4761,8 @@
       "archived": true,
       "kind": "install",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "py/saycheese",
@@ -4596,7 +4790,8 @@
       "archived": false,
       "kind": "install",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "py/qr-code-jacking",
@@ -4624,7 +4819,8 @@
       "archived": false,
       "kind": "install",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "py/blackeye",
@@ -4648,7 +4844,8 @@
       "archived": true,
       "kind": "install",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "py/shellphish",
@@ -4672,7 +4869,8 @@
       "archived": true,
       "kind": "install",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "py/thanos",
@@ -4695,7 +4893,8 @@
       "archived": true,
       "kind": "install",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "py/qrljacking",
@@ -4724,7 +4923,8 @@
       "archived": false,
       "kind": "install",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "py/blackphish",
@@ -4748,7 +4948,8 @@
       "archived": true,
       "kind": "install",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "py/maskphish",
@@ -4776,7 +4977,8 @@
       "archived": false,
       "kind": "install",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "py/dnstwist",
@@ -4825,7 +5027,8 @@
       "archived": false,
       "kind": "install",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/gophish-phishing-simulation",
@@ -4864,7 +5067,8 @@
       "archived": false,
       "kind": "install",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/gophish-documentation",
@@ -4886,7 +5090,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/mitre-att-ck-phishing-t1566",
@@ -4908,7 +5113,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Phishing attack tools",
-      "category_id": "phishing-attack-tools"
+      "category_id": "phishing-attack-tools",
+      "params": []
     },
     {
       "id": "py/vegile-ghost-in-the-shell",
@@ -4932,7 +5138,8 @@
       "archived": true,
       "kind": "install",
       "category": "Post exploitation tools",
-      "category_id": "post-exploitation-tools"
+      "category_id": "post-exploitation-tools",
+      "params": []
     },
     {
       "id": "py/chrome-keylogger",
@@ -4956,7 +5163,8 @@
       "archived": true,
       "kind": "install",
       "category": "Post exploitation tools",
-      "category_id": "post-exploitation-tools"
+      "category_id": "post-exploitation-tools",
+      "params": []
     },
     {
       "id": "py/pwncat-cs-reverse-shell-handler",
@@ -5006,7 +5214,8 @@
       "archived": false,
       "kind": "install",
       "category": "Post exploitation tools",
-      "category_id": "post-exploitation-tools"
+      "category_id": "post-exploitation-tools",
+      "params": []
     },
     {
       "id": "py/sliver-c2-framework",
@@ -5051,7 +5260,11 @@
       "archived": false,
       "kind": "install",
       "category": "Post exploitation tools",
-      "category_id": "post-exploitation-tools"
+      "category_id": "post-exploitation-tools",
+      "params": [
+        "attacker-ip",
+        "session-id"
+      ]
     },
     {
       "id": "py/havoc-c2-framework",
@@ -5075,7 +5288,8 @@
       "archived": true,
       "kind": "install",
       "category": "Post exploitation tools",
-      "category_id": "post-exploitation-tools"
+      "category_id": "post-exploitation-tools",
+      "params": []
     },
     {
       "id": "py/peass-ng-linpeas-winpeas-priv-esc",
@@ -5124,7 +5338,10 @@
       "archived": false,
       "kind": "install",
       "category": "Post exploitation tools",
-      "category_id": "post-exploitation-tools"
+      "category_id": "post-exploitation-tools",
+      "params": [
+        "attacker"
+      ]
     },
     {
       "id": "py/ligolo-ng-tunneling-pivoting",
@@ -5170,7 +5387,10 @@
       "archived": false,
       "kind": "install",
       "category": "Post exploitation tools",
-      "category_id": "post-exploitation-tools"
+      "category_id": "post-exploitation-tools",
+      "params": [
+        "attacker-ip"
+      ]
     },
     {
       "id": "py/chisel-http-tunnel",
@@ -5212,7 +5432,10 @@
       "archived": false,
       "kind": "install",
       "category": "Post exploitation tools",
-      "category_id": "post-exploitation-tools"
+      "category_id": "post-exploitation-tools",
+      "params": [
+        "attacker-ip"
+      ]
     },
     {
       "id": "py/evil-winrm-windows-remote-shell",
@@ -5258,7 +5481,11 @@
       "archived": false,
       "kind": "install",
       "category": "Post exploitation tools",
-      "category_id": "post-exploitation-tools"
+      "category_id": "post-exploitation-tools",
+      "params": [
+        "ntlm-hash",
+        "target"
+      ]
     },
     {
       "id": "py/mythic-c2-platform",
@@ -5303,7 +5530,8 @@
       "archived": false,
       "kind": "install",
       "category": "Post exploitation tools",
-      "category_id": "post-exploitation-tools"
+      "category_id": "post-exploitation-tools",
+      "params": []
     },
     {
       "id": "yaml/pspy-unprivileged-process-snooping",
@@ -5344,7 +5572,8 @@
       "archived": false,
       "kind": "install",
       "category": "Post exploitation tools",
-      "category_id": "post-exploitation-tools"
+      "category_id": "post-exploitation-tools",
+      "params": []
     },
     {
       "id": "yaml/linux-smart-enumeration-lse-sh",
@@ -5385,7 +5614,10 @@
       "archived": false,
       "kind": "install",
       "category": "Post exploitation tools",
-      "category_id": "post-exploitation-tools"
+      "category_id": "post-exploitation-tools",
+      "params": [
+        "attacker"
+      ]
     },
     {
       "id": "yaml/lazagne-local-credential-recovery",
@@ -5426,7 +5658,8 @@
       "archived": false,
       "kind": "install",
       "category": "Post exploitation tools",
-      "category_id": "post-exploitation-tools"
+      "category_id": "post-exploitation-tools",
+      "params": []
     },
     {
       "id": "yaml/hacktricks-post-ex-privesc-playbook",
@@ -5449,7 +5682,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Post exploitation tools",
-      "category_id": "post-exploitation-tools"
+      "category_id": "post-exploitation-tools",
+      "params": []
     },
     {
       "id": "yaml/lolbas-windows-living-off-the-land-binaries",
@@ -5472,7 +5706,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Post exploitation tools",
-      "category_id": "post-exploitation-tools"
+      "category_id": "post-exploitation-tools",
+      "params": []
     },
     {
       "id": "yaml/revshells-com-reverse-shell-generator",
@@ -5495,7 +5730,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Post exploitation tools",
-      "category_id": "post-exploitation-tools"
+      "category_id": "post-exploitation-tools",
+      "params": []
     },
     {
       "id": "yaml/payloadsallthethings-payload-technique-cheatsheets",
@@ -5518,7 +5754,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Post exploitation tools",
-      "category_id": "post-exploitation-tools"
+      "category_id": "post-exploitation-tools",
+      "params": []
     },
     {
       "id": "yaml/mimikatz-windows-credential-dumping-reference",
@@ -5541,7 +5778,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Post exploitation tools",
-      "category_id": "post-exploitation-tools"
+      "category_id": "post-exploitation-tools",
+      "params": []
     },
     {
       "id": "py/pyshell",
@@ -5565,7 +5803,8 @@
       "archived": true,
       "kind": "install",
       "category": "Remote Administrator Tools (RAT)",
-      "category_id": "remote-administrator-tools-rat"
+      "category_id": "remote-administrator-tools-rat",
+      "params": []
     },
     {
       "id": "yaml/villain-reverse-shell-c2-manager",
@@ -5599,7 +5838,8 @@
       "archived": false,
       "kind": "install",
       "category": "Remote Administrator Tools (RAT)",
-      "category_id": "remote-administrator-tools-rat"
+      "category_id": "remote-administrator-tools-rat",
+      "params": []
     },
     {
       "id": "yaml/hoaxshell-http-s-powershell-reverse-shell",
@@ -5633,7 +5873,10 @@
       "archived": false,
       "kind": "install",
       "category": "Remote Administrator Tools (RAT)",
-      "category_id": "remote-administrator-tools-rat"
+      "category_id": "remote-administrator-tools-rat",
+      "params": [
+        "attacker-ip"
+      ]
     },
     {
       "id": "yaml/merlin-cross-platform-c2",
@@ -5655,7 +5898,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Remote Administrator Tools (RAT)",
-      "category_id": "remote-administrator-tools-rat"
+      "category_id": "remote-administrator-tools-rat",
+      "params": []
     },
     {
       "id": "yaml/covenant-net-c2",
@@ -5677,7 +5921,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Remote Administrator Tools (RAT)",
-      "category_id": "remote-administrator-tools-rat"
+      "category_id": "remote-administrator-tools-rat",
+      "params": []
     },
     {
       "id": "py/androguard",
@@ -5721,7 +5966,8 @@
       "archived": false,
       "kind": "install",
       "category": "Reverse engineering tools",
-      "category_id": "reverse-engineering-tools"
+      "category_id": "reverse-engineering-tools",
+      "params": []
     },
     {
       "id": "py/apk2gold",
@@ -5748,7 +5994,8 @@
       "archived": false,
       "kind": "install",
       "category": "Reverse engineering tools",
-      "category_id": "reverse-engineering-tools"
+      "category_id": "reverse-engineering-tools",
+      "params": []
     },
     {
       "id": "py/jadx",
@@ -5791,7 +6038,8 @@
       "archived": false,
       "kind": "install",
       "category": "Reverse engineering tools",
-      "category_id": "reverse-engineering-tools"
+      "category_id": "reverse-engineering-tools",
+      "params": []
     },
     {
       "id": "py/ghidra-nsa-reverse-engineering",
@@ -5828,7 +6076,8 @@
       "archived": false,
       "kind": "install",
       "category": "Reverse engineering tools",
-      "category_id": "reverse-engineering-tools"
+      "category_id": "reverse-engineering-tools",
+      "params": []
     },
     {
       "id": "py/radare2-re-framework",
@@ -5880,7 +6129,8 @@
       "archived": false,
       "kind": "install",
       "category": "Reverse engineering tools",
-      "category_id": "reverse-engineering-tools"
+      "category_id": "reverse-engineering-tools",
+      "params": []
     },
     {
       "id": "yaml/apktool-apk-decode-rebuild",
@@ -5921,7 +6171,8 @@
       "archived": false,
       "kind": "install",
       "category": "Reverse engineering tools",
-      "category_id": "reverse-engineering-tools"
+      "category_id": "reverse-engineering-tools",
+      "params": []
     },
     {
       "id": "yaml/gdb-gnu-debugger",
@@ -5973,7 +6224,8 @@
       "archived": false,
       "kind": "install",
       "category": "Reverse engineering tools",
-      "category_id": "reverse-engineering-tools"
+      "category_id": "reverse-engineering-tools",
+      "params": []
     },
     {
       "id": "yaml/binutils-strings-objdump-readelf",
@@ -6021,7 +6273,8 @@
       "archived": false,
       "kind": "install",
       "category": "Reverse engineering tools",
-      "category_id": "reverse-engineering-tools"
+      "category_id": "reverse-engineering-tools",
+      "params": []
     },
     {
       "id": "yaml/crackmes-one-re-practice",
@@ -6043,7 +6296,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Reverse engineering tools",
-      "category_id": "reverse-engineering-tools"
+      "category_id": "reverse-engineering-tools",
+      "params": []
     },
     {
       "id": "yaml/malware-unicorn-re101-workshop",
@@ -6066,7 +6320,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Reverse engineering tools",
-      "category_id": "reverse-engineering-tools"
+      "category_id": "reverse-engineering-tools",
+      "params": []
     },
     {
       "id": "py/sqlmap-tool",
@@ -6120,7 +6375,8 @@
       "archived": false,
       "kind": "install",
       "category": "SQL Injection Tools",
-      "category_id": "sql-injection-tools"
+      "category_id": "sql-injection-tools",
+      "params": []
     },
     {
       "id": "py/nosqlmap",
@@ -6149,7 +6405,8 @@
       "archived": false,
       "kind": "install",
       "category": "SQL Injection Tools",
-      "category_id": "sql-injection-tools"
+      "category_id": "sql-injection-tools",
+      "params": []
     },
     {
       "id": "py/damn-small-sqli-scanner",
@@ -6184,7 +6441,8 @@
       "archived": false,
       "kind": "install",
       "category": "SQL Injection Tools",
-      "category_id": "sql-injection-tools"
+      "category_id": "sql-injection-tools",
+      "params": []
     },
     {
       "id": "py/explo",
@@ -6210,7 +6468,8 @@
       "archived": true,
       "kind": "install",
       "category": "SQL Injection Tools",
-      "category_id": "sql-injection-tools"
+      "category_id": "sql-injection-tools",
+      "params": []
     },
     {
       "id": "py/blisqy-exploit-time-based-blind-sql-injection",
@@ -6232,7 +6491,8 @@
       "archived": true,
       "kind": "install",
       "category": "SQL Injection Tools",
-      "category_id": "sql-injection-tools"
+      "category_id": "sql-injection-tools",
+      "params": []
     },
     {
       "id": "py/leviathan-wide-range-mass-audit-toolkit",
@@ -6257,7 +6517,8 @@
       "archived": true,
       "kind": "install",
       "category": "SQL Injection Tools",
-      "category_id": "sql-injection-tools"
+      "category_id": "sql-injection-tools",
+      "params": []
     },
     {
       "id": "py/sqlscan",
@@ -6286,7 +6547,8 @@
       "archived": false,
       "kind": "install",
       "category": "SQL Injection Tools",
-      "category_id": "sql-injection-tools"
+      "category_id": "sql-injection-tools",
+      "params": []
     },
     {
       "id": "yaml/ghauri-modern-sqli-tool",
@@ -6332,7 +6594,8 @@
       "archived": false,
       "kind": "install",
       "category": "SQL Injection Tools",
-      "category_id": "sql-injection-tools"
+      "category_id": "sql-injection-tools",
+      "params": []
     },
     {
       "id": "yaml/portswigger-sql-injection-labs",
@@ -6355,7 +6618,8 @@
       "archived": false,
       "kind": "resource",
       "category": "SQL Injection Tools",
-      "category_id": "sql-injection-tools"
+      "category_id": "sql-injection-tools",
+      "params": []
     },
     {
       "id": "yaml/payloadsallthethings-sql-injection",
@@ -6378,7 +6642,8 @@
       "archived": false,
       "kind": "resource",
       "category": "SQL Injection Tools",
-      "category_id": "sql-injection-tools"
+      "category_id": "sql-injection-tools",
+      "params": []
     },
     {
       "id": "py/steganohide",
@@ -6421,7 +6686,8 @@
       "archived": false,
       "kind": "install",
       "category": "Steganography Tools",
-      "category_id": "steganography-tools"
+      "category_id": "steganography-tools",
+      "params": []
     },
     {
       "id": "py/stegseek-fast-steganography-cracker",
@@ -6450,7 +6716,11 @@
       "archived": false,
       "kind": "install",
       "category": "Steganography Tools",
-      "category_id": "steganography-tools"
+      "category_id": "steganography-tools",
+      "params": [
+        "stegofile",
+        "wordlist"
+      ]
     },
     {
       "id": "py/stegocracker",
@@ -6475,7 +6745,8 @@
       "archived": true,
       "kind": "install",
       "category": "Steganography Tools",
-      "category_id": "steganography-tools"
+      "category_id": "steganography-tools",
+      "params": []
     },
     {
       "id": "py/whitespace",
@@ -6498,7 +6769,8 @@
       "archived": true,
       "kind": "install",
       "category": "Steganography Tools",
-      "category_id": "steganography-tools"
+      "category_id": "steganography-tools",
+      "params": []
     },
     {
       "id": "yaml/stegseek-fast-steghide-cracker",
@@ -6540,7 +6812,8 @@
       "archived": false,
       "kind": "install",
       "category": "Steganography Tools",
-      "category_id": "steganography-tools"
+      "category_id": "steganography-tools",
+      "params": []
     },
     {
       "id": "yaml/zsteg-png-bmp-lsb-detector",
@@ -6581,7 +6854,8 @@
       "archived": false,
       "kind": "install",
       "category": "Steganography Tools",
-      "category_id": "steganography-tools"
+      "category_id": "steganography-tools",
+      "params": []
     },
     {
       "id": "yaml/outguess-jpeg-stego",
@@ -6622,7 +6896,8 @@
       "archived": false,
       "kind": "install",
       "category": "Steganography Tools",
-      "category_id": "steganography-tools"
+      "category_id": "steganography-tools",
+      "params": []
     },
     {
       "id": "yaml/exiftool-metadata-reader",
@@ -6664,7 +6939,8 @@
       "archived": false,
       "kind": "install",
       "category": "Steganography Tools",
-      "category_id": "steganography-tools"
+      "category_id": "steganography-tools",
+      "params": []
     },
     {
       "id": "yaml/aperi-solve-all-in-one-image-stego",
@@ -6687,7 +6963,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Steganography Tools",
-      "category_id": "steganography-tools"
+      "category_id": "steganography-tools",
+      "params": []
     },
     {
       "id": "yaml/stegonline-in-browser-lsb-explorer",
@@ -6709,7 +6986,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Steganography Tools",
-      "category_id": "steganography-tools"
+      "category_id": "steganography-tools",
+      "params": []
     },
     {
       "id": "yaml/futureboy-stegano-decoder",
@@ -6731,7 +7009,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Steganography Tools",
-      "category_id": "steganography-tools"
+      "category_id": "steganography-tools",
+      "params": []
     },
     {
       "id": "yaml/stego-toolkit-docker-kit-checklist",
@@ -6753,7 +7032,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Steganography Tools",
-      "category_id": "steganography-tools"
+      "category_id": "steganography-tools",
+      "params": []
     },
     {
       "id": "py/web2attack-2",
@@ -6773,7 +7053,8 @@
       "archived": true,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/skipfish",
@@ -6816,7 +7097,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/subdomain-finder",
@@ -6858,7 +7140,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/checkurl",
@@ -6882,7 +7165,8 @@
       "archived": true,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/blazy-also-find-clickjacking",
@@ -6904,7 +7188,8 @@
       "archived": true,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/sub-domain-takeover",
@@ -6939,7 +7224,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/dirb",
@@ -6979,7 +7265,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/nuclei-vulnerability-scanner",
@@ -7024,7 +7311,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/ffuf-web-fuzzer",
@@ -7070,7 +7358,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/feroxbuster-directory-brute-force",
@@ -7112,7 +7401,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/nikto-web-server-scanner",
@@ -7153,7 +7443,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/wafw00f-waf-detector",
@@ -7190,7 +7481,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/katana-web-crawler",
@@ -7232,7 +7524,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/gobuster-dir-dns-vhost-brute-force",
@@ -7275,7 +7568,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/dirsearch-web-path-discovery",
@@ -7317,7 +7611,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/owasp-zap-web-app-scanner",
@@ -7355,7 +7650,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/testssl-sh-tls-ssl-checker",
@@ -7396,7 +7692,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/arjun-http-parameter-discovery",
@@ -7437,7 +7734,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/caido-web-security-auditing",
@@ -7461,7 +7759,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/mitmproxy-intercepting-proxy",
@@ -7502,7 +7801,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/whatweb-web-fingerprinter",
@@ -7548,7 +7848,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/wpscan-wordpress-scanner",
@@ -7598,7 +7899,8 @@
       "archived": false,
       "kind": "install",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/portswigger-web-security-academy",
@@ -7620,7 +7922,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/payloadsallthethings",
@@ -7643,7 +7946,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/hacktricks",
@@ -7666,7 +7970,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/revshells-com-reverse-shell-generator-2",
@@ -7689,7 +7994,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Web Attack tools",
-      "category_id": "web-attack-tools"
+      "category_id": "web-attack-tools",
+      "params": []
     },
     {
       "id": "py/wifi-pumpkin",
@@ -7735,7 +8041,8 @@
       "archived": false,
       "kind": "install",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": []
     },
     {
       "id": "py/pixiewps",
@@ -7778,7 +8085,17 @@
       "archived": false,
       "kind": "install",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": [
+        "BSSID",
+        "authkey",
+        "ch",
+        "ehash1",
+        "ehash2",
+        "enonce",
+        "pke",
+        "pkr"
+      ]
     },
     {
       "id": "py/bluetooth-honeypot-gui-framework",
@@ -7814,7 +8131,8 @@
       "archived": false,
       "kind": "install",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": []
     },
     {
       "id": "py/fluxion",
@@ -7856,7 +8174,8 @@
       "archived": false,
       "kind": "install",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": []
     },
     {
       "id": "py/wifiphisher",
@@ -7898,7 +8217,8 @@
       "archived": false,
       "kind": "install",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": []
     },
     {
       "id": "py/wifite",
@@ -7944,7 +8264,11 @@
       "archived": false,
       "kind": "install",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": [
+        "BSSID",
+        "channel"
+      ]
     },
     {
       "id": "py/eviltwin",
@@ -7969,7 +8293,8 @@
       "archived": true,
       "kind": "install",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": []
     },
     {
       "id": "py/fastssh",
@@ -7994,7 +8319,8 @@
       "archived": true,
       "kind": "install",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": []
     },
     {
       "id": "py/howmanypeople",
@@ -8035,7 +8361,8 @@
       "archived": false,
       "kind": "install",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": []
     },
     {
       "id": "py/airgeddon-wireless-attack-suite",
@@ -8081,7 +8408,8 @@
       "archived": false,
       "kind": "install",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": []
     },
     {
       "id": "py/hcxdumptool-pmkid-capture",
@@ -8123,7 +8451,8 @@
       "archived": false,
       "kind": "install",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": []
     },
     {
       "id": "py/hcxtools-pmkid-hash-conversion",
@@ -8165,7 +8494,8 @@
       "archived": false,
       "kind": "install",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": []
     },
     {
       "id": "py/bettercap-network-wifi-ble-mitm",
@@ -8207,7 +8537,10 @@
       "archived": false,
       "kind": "install",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": [
+        "ip"
+      ]
     },
     {
       "id": "yaml/aircrack-ng-wifi-security-suite",
@@ -8257,7 +8590,11 @@
       "archived": false,
       "kind": "install",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": [
+        "BSSID",
+        "CLIENT"
+      ]
     },
     {
       "id": "yaml/kismet-wireless-detector-wids",
@@ -8299,7 +8636,8 @@
       "archived": false,
       "kind": "install",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/reaver-wps-pin-attack",
@@ -8341,7 +8679,11 @@
       "archived": false,
       "kind": "install",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": [
+        "BSSID",
+        "ch"
+      ]
     },
     {
       "id": "yaml/wigle-wardriving-map-api",
@@ -8364,7 +8706,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/hashcat-example-hashes-wpa-mode-22000",
@@ -8386,7 +8729,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/aircrack-ng-cracking-wpa-tutorial",
@@ -8408,7 +8752,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Wireless attack tools",
-      "category_id": "wireless-attack-tools"
+      "category_id": "wireless-attack-tools",
+      "params": []
     },
     {
       "id": "py/cupp",
@@ -8446,7 +8791,8 @@
       "archived": false,
       "kind": "install",
       "category": "Wordlist Generator",
-      "category_id": "wordlist-generator"
+      "category_id": "wordlist-generator",
+      "params": []
     },
     {
       "id": "py/wordlistcreator",
@@ -8469,7 +8815,8 @@
       "archived": true,
       "kind": "install",
       "category": "Wordlist Generator",
-      "category_id": "wordlist-generator"
+      "category_id": "wordlist-generator",
+      "params": []
     },
     {
       "id": "py/goblin-wordgenerator",
@@ -8492,7 +8839,8 @@
       "archived": true,
       "kind": "install",
       "category": "Wordlist Generator",
-      "category_id": "wordlist-generator"
+      "category_id": "wordlist-generator",
+      "params": []
     },
     {
       "id": "py/password-list-1-4-billion-clear-text-password",
@@ -8516,7 +8864,8 @@
       "archived": true,
       "kind": "install",
       "category": "Wordlist Generator",
-      "category_id": "wordlist-generator"
+      "category_id": "wordlist-generator",
+      "params": []
     },
     {
       "id": "py/hashcat-password-cracker",
@@ -8545,7 +8894,12 @@
       "archived": false,
       "kind": "install",
       "category": "Wordlist Generator",
-      "category_id": "wordlist-generator"
+      "category_id": "wordlist-generator",
+      "params": [
+        "hashfile",
+        "mode",
+        "wordlist"
+      ]
     },
     {
       "id": "py/john-the-ripper",
@@ -8578,7 +8932,11 @@
       "archived": false,
       "kind": "install",
       "category": "Wordlist Generator",
-      "category_id": "wordlist-generator"
+      "category_id": "wordlist-generator",
+      "params": [
+        "hashfile",
+        "wordlist"
+      ]
     },
     {
       "id": "py/haiti-hash-type-identifier",
@@ -8607,7 +8965,10 @@
       "archived": false,
       "kind": "install",
       "category": "Wordlist Generator",
-      "category_id": "wordlist-generator"
+      "category_id": "wordlist-generator",
+      "params": [
+        "hash"
+      ]
     },
     {
       "id": "yaml/crunch-wordlist-generator",
@@ -8644,7 +9005,8 @@
       "archived": false,
       "kind": "install",
       "category": "Wordlist Generator",
-      "category_id": "wordlist-generator"
+      "category_id": "wordlist-generator",
+      "params": []
     },
     {
       "id": "yaml/cewl-custom-word-list",
@@ -8682,7 +9044,8 @@
       "archived": false,
       "kind": "install",
       "category": "Wordlist Generator",
-      "category_id": "wordlist-generator"
+      "category_id": "wordlist-generator",
+      "params": []
     },
     {
       "id": "yaml/seclists-wordlist-collection",
@@ -8704,7 +9067,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Wordlist Generator",
-      "category_id": "wordlist-generator"
+      "category_id": "wordlist-generator",
+      "params": []
     },
     {
       "id": "yaml/kali-wordlists-package-rockyou-etc",
@@ -8726,7 +9090,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Wordlist Generator",
-      "category_id": "wordlist-generator"
+      "category_id": "wordlist-generator",
+      "params": []
     },
     {
       "id": "py/dalfox-finder-of-xss",
@@ -8772,7 +9137,8 @@
       "archived": false,
       "kind": "install",
       "category": "XSS Attack Tools",
-      "category_id": "xss-attack-tools"
+      "category_id": "xss-attack-tools",
+      "params": []
     },
     {
       "id": "py/xss-payload-generator",
@@ -8801,7 +9167,8 @@
       "archived": false,
       "kind": "install",
       "category": "XSS Attack Tools",
-      "category_id": "xss-attack-tools"
+      "category_id": "xss-attack-tools",
+      "params": []
     },
     {
       "id": "py/extended-xss-searcher-and-finder",
@@ -8823,7 +9190,8 @@
       "archived": true,
       "kind": "install",
       "category": "XSS Attack Tools",
-      "category_id": "xss-attack-tools"
+      "category_id": "xss-attack-tools",
+      "params": []
     },
     {
       "id": "py/xss-freak",
@@ -8847,7 +9215,8 @@
       "archived": true,
       "kind": "install",
       "category": "XSS Attack Tools",
-      "category_id": "xss-attack-tools"
+      "category_id": "xss-attack-tools",
+      "params": []
     },
     {
       "id": "py/xspear",
@@ -8880,7 +9249,10 @@
       "archived": true,
       "kind": "install",
       "category": "XSS Attack Tools",
-      "category_id": "xss-attack-tools"
+      "category_id": "xss-attack-tools",
+      "params": [
+        "url"
+      ]
     },
     {
       "id": "py/xsscon",
@@ -8907,7 +9279,10 @@
       "archived": true,
       "kind": "install",
       "category": "XSS Attack Tools",
-      "category_id": "xss-attack-tools"
+      "category_id": "xss-attack-tools",
+      "params": [
+        "url"
+      ]
     },
     {
       "id": "py/xanxss",
@@ -8929,7 +9304,8 @@
       "archived": true,
       "kind": "install",
       "category": "XSS Attack Tools",
-      "category_id": "xss-attack-tools"
+      "category_id": "xss-attack-tools",
+      "params": []
     },
     {
       "id": "py/advanced-xss-detection-suite",
@@ -8969,7 +9345,8 @@
       "archived": false,
       "kind": "install",
       "category": "XSS Attack Tools",
-      "category_id": "xss-attack-tools"
+      "category_id": "xss-attack-tools",
+      "params": []
     },
     {
       "id": "py/rvuln",
@@ -8993,7 +9370,8 @@
       "archived": true,
       "kind": "install",
       "category": "XSS Attack Tools",
-      "category_id": "xss-attack-tools"
+      "category_id": "xss-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/kxss-reflection-finder",
@@ -9027,7 +9405,8 @@
       "archived": false,
       "kind": "install",
       "category": "XSS Attack Tools",
-      "category_id": "xss-attack-tools"
+      "category_id": "xss-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/portswigger-xss-labs",
@@ -9050,7 +9429,8 @@
       "archived": false,
       "kind": "resource",
       "category": "XSS Attack Tools",
-      "category_id": "xss-attack-tools"
+      "category_id": "xss-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/payloadsallthethings-xss-injection",
@@ -9073,7 +9453,8 @@
       "archived": false,
       "kind": "resource",
       "category": "XSS Attack Tools",
-      "category_id": "xss-attack-tools"
+      "category_id": "xss-attack-tools",
+      "params": []
     },
     {
       "id": "yaml/sigma-cli-rule-conversion",
@@ -9110,7 +9491,8 @@
       "archived": false,
       "kind": "install",
       "category": "Detection Engineering",
-      "category_id": "detection-engineering"
+      "category_id": "detection-engineering",
+      "params": []
     },
     {
       "id": "yaml/yara-signature-scanning",
@@ -9147,7 +9529,8 @@
       "archived": false,
       "kind": "install",
       "category": "Detection Engineering",
-      "category_id": "detection-engineering"
+      "category_id": "detection-engineering",
+      "params": []
     },
     {
       "id": "yaml/suricata-network-ids",
@@ -9184,7 +9567,8 @@
       "archived": false,
       "kind": "install",
       "category": "Detection Engineering",
-      "category_id": "detection-engineering"
+      "category_id": "detection-engineering",
+      "params": []
     },
     {
       "id": "yaml/chainsaw-event-log-hunting",
@@ -9222,7 +9606,8 @@
       "archived": false,
       "kind": "install",
       "category": "Detection Engineering",
-      "category_id": "detection-engineering"
+      "category_id": "detection-engineering",
+      "params": []
     },
     {
       "id": "yaml/hayabusa-evtx-timeline-analysis",
@@ -9260,7 +9645,8 @@
       "archived": false,
       "kind": "install",
       "category": "Detection Engineering",
-      "category_id": "detection-engineering"
+      "category_id": "detection-engineering",
+      "params": []
     },
     {
       "id": "yaml/zeek-network-security-monitor",
@@ -9298,7 +9684,8 @@
       "archived": false,
       "kind": "install",
       "category": "Detection Engineering",
-      "category_id": "detection-engineering"
+      "category_id": "detection-engineering",
+      "params": []
     },
     {
       "id": "yaml/lynis-system-hardening-audit",
@@ -9335,7 +9722,8 @@
       "archived": false,
       "kind": "install",
       "category": "Hardening & Compliance",
-      "category_id": "hardening-compliance"
+      "category_id": "hardening-compliance",
+      "params": []
     },
     {
       "id": "yaml/openscap-compliance-scanning",
@@ -9372,7 +9760,8 @@
       "archived": false,
       "kind": "install",
       "category": "Hardening & Compliance",
-      "category_id": "hardening-compliance"
+      "category_id": "hardening-compliance",
+      "params": []
     },
     {
       "id": "yaml/prowler-cloud-security-audit",
@@ -9410,7 +9799,8 @@
       "archived": false,
       "kind": "install",
       "category": "Hardening & Compliance",
-      "category_id": "hardening-compliance"
+      "category_id": "hardening-compliance",
+      "params": []
     },
     {
       "id": "yaml/auditd-kernel-audit-rules",
@@ -9452,7 +9842,8 @@
       "archived": false,
       "kind": "install",
       "category": "Hardening & Compliance",
-      "category_id": "hardening-compliance"
+      "category_id": "hardening-compliance",
+      "params": []
     },
     {
       "id": "yaml/cis-benchmarks",
@@ -9479,7 +9870,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Hardening & Compliance",
-      "category_id": "hardening-compliance"
+      "category_id": "hardening-compliance",
+      "params": []
     },
     {
       "id": "yaml/velociraptor-endpoint-dfir",
@@ -9517,7 +9909,8 @@
       "archived": false,
       "kind": "install",
       "category": "Incident Response",
-      "category_id": "incident-response"
+      "category_id": "incident-response",
+      "params": []
     },
     {
       "id": "yaml/volatility-3-memory-forensics",
@@ -9559,7 +9952,8 @@
       "archived": false,
       "kind": "install",
       "category": "Incident Response",
-      "category_id": "incident-response"
+      "category_id": "incident-response",
+      "params": []
     },
     {
       "id": "yaml/loki-ioc-scanner",
@@ -9597,7 +9991,8 @@
       "archived": false,
       "kind": "install",
       "category": "Incident Response",
-      "category_id": "incident-response"
+      "category_id": "incident-response",
+      "params": []
     },
     {
       "id": "yaml/kape-triage-collection",
@@ -9630,7 +10025,8 @@
       "archived": false,
       "kind": "install",
       "category": "Incident Response",
-      "category_id": "incident-response"
+      "category_id": "incident-response",
+      "params": []
     },
     {
       "id": "yaml/autoruns-persistence-audit",
@@ -9667,7 +10063,8 @@
       "archived": false,
       "kind": "install",
       "category": "Incident Response",
-      "category_id": "incident-response"
+      "category_id": "incident-response",
+      "params": []
     },
     {
       "id": "yaml/hashdeep-sha256sum-evidence-hashing",
@@ -9703,7 +10100,8 @@
       "archived": false,
       "kind": "install",
       "category": "Incident Response",
-      "category_id": "incident-response"
+      "category_id": "incident-response",
+      "params": []
     },
     {
       "id": "yaml/osquery-host-telemetry-sql",
@@ -9745,7 +10143,8 @@
       "archived": false,
       "kind": "install",
       "category": "Log & Endpoint Analysis",
-      "category_id": "log-endpoint-analysis"
+      "category_id": "log-endpoint-analysis",
+      "params": []
     },
     {
       "id": "yaml/tshark-packet-inspection",
@@ -9787,7 +10186,8 @@
       "archived": false,
       "kind": "install",
       "category": "Log & Endpoint Analysis",
-      "category_id": "log-endpoint-analysis"
+      "category_id": "log-endpoint-analysis",
+      "params": []
     },
     {
       "id": "yaml/journalctl-systemd-log-query",
@@ -9823,7 +10223,8 @@
       "archived": false,
       "kind": "install",
       "category": "Log & Endpoint Analysis",
-      "category_id": "log-endpoint-analysis"
+      "category_id": "log-endpoint-analysis",
+      "params": []
     },
     {
       "id": "yaml/python-evtx-evtx-dump",
@@ -9856,7 +10257,8 @@
       "archived": false,
       "kind": "install",
       "category": "Log & Endpoint Analysis",
-      "category_id": "log-endpoint-analysis"
+      "category_id": "log-endpoint-analysis",
+      "params": []
     },
     {
       "id": "yaml/lsof-open-files-sockets",
@@ -9892,7 +10294,8 @@
       "archived": false,
       "kind": "install",
       "category": "Log & Endpoint Analysis",
-      "category_id": "log-endpoint-analysis"
+      "category_id": "log-endpoint-analysis",
+      "params": []
     },
     {
       "id": "yaml/ps-ss-process-socket-snapshot",
@@ -9928,7 +10331,8 @@
       "archived": false,
       "kind": "install",
       "category": "Log & Endpoint Analysis",
-      "category_id": "log-endpoint-analysis"
+      "category_id": "log-endpoint-analysis",
+      "params": []
     },
     {
       "id": "yaml/capa-capability-detection",
@@ -9965,7 +10369,8 @@
       "archived": false,
       "kind": "install",
       "category": "Malware Triage",
-      "category_id": "malware-triage"
+      "category_id": "malware-triage",
+      "params": []
     },
     {
       "id": "yaml/oletools-ooxml-macro-analysis",
@@ -10006,7 +10411,8 @@
       "archived": false,
       "kind": "install",
       "category": "Malware Triage",
-      "category_id": "malware-triage"
+      "category_id": "malware-triage",
+      "params": []
     },
     {
       "id": "yaml/floss-obfuscated-strings",
@@ -10043,7 +10449,8 @@
       "archived": false,
       "kind": "install",
       "category": "Malware Triage",
-      "category_id": "malware-triage"
+      "category_id": "malware-triage",
+      "params": []
     },
     {
       "id": "yaml/clamav-signature-scanning",
@@ -10080,7 +10487,8 @@
       "archived": false,
       "kind": "install",
       "category": "Malware Triage",
-      "category_id": "malware-triage"
+      "category_id": "malware-triage",
+      "params": []
     },
     {
       "id": "yaml/detect-it-easy-binary-inspector",
@@ -10111,7 +10519,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Malware Triage",
-      "category_id": "malware-triage"
+      "category_id": "malware-triage",
+      "params": []
     },
     {
       "id": "yaml/misp-threat-sharing-platform",
@@ -10142,7 +10551,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Threat Intel & Hunting",
-      "category_id": "threat-intel-hunting"
+      "category_id": "threat-intel-hunting",
+      "params": []
     },
     {
       "id": "yaml/opencti-cti-knowledge-base",
@@ -10168,7 +10578,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Threat Intel & Hunting",
-      "category_id": "threat-intel-hunting"
+      "category_id": "threat-intel-hunting",
+      "params": []
     },
     {
       "id": "yaml/mitre-att-ck-navigator",
@@ -10199,7 +10610,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Threat Intel & Hunting",
-      "category_id": "threat-intel-hunting"
+      "category_id": "threat-intel-hunting",
+      "params": []
     },
     {
       "id": "yaml/sigmahq-rule-repository",
@@ -10226,7 +10638,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Threat Intel & Hunting",
-      "category_id": "threat-intel-hunting"
+      "category_id": "threat-intel-hunting",
+      "params": []
     },
     {
       "id": "yaml/yara-rules-repository",
@@ -10253,7 +10666,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Threat Intel & Hunting",
-      "category_id": "threat-intel-hunting"
+      "category_id": "threat-intel-hunting",
+      "params": []
     },
     {
       "id": "yaml/greynoise-internet-noise-context",
@@ -10279,7 +10693,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Threat Intel & Hunting",
-      "category_id": "threat-intel-hunting"
+      "category_id": "threat-intel-hunting",
+      "params": []
     },
     {
       "id": "yaml/ioc-finder-indicator-extraction",
@@ -10316,7 +10731,8 @@
       "archived": false,
       "kind": "install",
       "category": "Threat Intel & Hunting",
-      "category_id": "threat-intel-hunting"
+      "category_id": "threat-intel-hunting",
+      "params": []
     },
     {
       "id": "yaml/nuclei-template-scanning",
@@ -10358,7 +10774,8 @@
       "archived": false,
       "kind": "install",
       "category": "Vulnerability Management",
-      "category_id": "vulnerability-management"
+      "category_id": "vulnerability-management",
+      "params": []
     },
     {
       "id": "yaml/trivy-container-iac-scanning",
@@ -10399,7 +10816,8 @@
       "archived": false,
       "kind": "install",
       "category": "Vulnerability Management",
-      "category_id": "vulnerability-management"
+      "category_id": "vulnerability-management",
+      "params": []
     },
     {
       "id": "yaml/openvas-greenbone-network-vulnerability-scanner",
@@ -10430,7 +10848,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Vulnerability Management",
-      "category_id": "vulnerability-management"
+      "category_id": "vulnerability-management",
+      "params": []
     },
     {
       "id": "yaml/owasp-dependency-check-sca",
@@ -10467,7 +10886,8 @@
       "archived": false,
       "kind": "install",
       "category": "Vulnerability Management",
-      "category_id": "vulnerability-management"
+      "category_id": "vulnerability-management",
+      "params": []
     },
     {
       "id": "yaml/syft-sbom-generation",
@@ -10504,7 +10924,8 @@
       "archived": false,
       "kind": "install",
       "category": "Vulnerability Management",
-      "category_id": "vulnerability-management"
+      "category_id": "vulnerability-management",
+      "params": []
     },
     {
       "id": "yaml/hashcat-gpu-hash-cracker",
@@ -10553,7 +10974,8 @@
       "archived": false,
       "kind": "install",
       "category": "Password / Hash Cracking",
-      "category_id": "password-hash-cracking"
+      "category_id": "password-hash-cracking",
+      "params": []
     },
     {
       "id": "yaml/john-the-ripper-jumbo",
@@ -10597,7 +11019,8 @@
       "archived": false,
       "kind": "install",
       "category": "Password / Hash Cracking",
-      "category_id": "password-hash-cracking"
+      "category_id": "password-hash-cracking",
+      "params": []
     },
     {
       "id": "yaml/hydra-network-login-cracker",
@@ -10643,7 +11066,8 @@
       "archived": false,
       "kind": "install",
       "category": "Password / Hash Cracking",
-      "category_id": "password-hash-cracking"
+      "category_id": "password-hash-cracking",
+      "params": []
     },
     {
       "id": "yaml/crackstation-online-lookup",
@@ -10665,7 +11089,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Password / Hash Cracking",
-      "category_id": "password-hash-cracking"
+      "category_id": "password-hash-cracking",
+      "params": []
     },
     {
       "id": "yaml/hashes-com-hash-identifier-lookup",
@@ -10687,7 +11112,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Password / Hash Cracking",
-      "category_id": "password-hash-cracking"
+      "category_id": "password-hash-cracking",
+      "params": []
     },
     {
       "id": "yaml/cyberchef-the-cyber-swiss-army-knife",
@@ -10708,7 +11134,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Password / Hash Cracking",
-      "category_id": "password-hash-cracking"
+      "category_id": "password-hash-cracking",
+      "params": []
     },
     {
       "id": "yaml/gtfobins-unix-binary-abuse",
@@ -10730,7 +11157,8 @@
       "archived": false,
       "kind": "resource",
       "category": "Password / Hash Cracking",
-      "category_id": "password-hash-cracking"
+      "category_id": "password-hash-cracking",
+      "params": []
     },
     {
       "id": "catalog-overlays/stegnocracker",
@@ -10766,7 +11194,8 @@
       "source": "catalog-overlay",
       "installable": false,
       "archived": false,
-      "kind": "install"
+      "kind": "install",
+      "params": []
     }
   ]
 }

@@ -151,6 +151,7 @@
     const p = document.getElementById('pane-' + paneName);
     if (p) p.classList.add('active');
     document.querySelectorAll('.ch-dtab').forEach((b) => b.classList.toggle('on', b.dataset.dtab === paneName));
+    if (paneName === 'tools') loadToolCatalog();
     if (paneName === 'globe' && !globe) {
       const gc = document.getElementById('globeCanvas');
       if (gc && window.ChappaGlobe) {
@@ -166,6 +167,128 @@
   window.closeDrawer = function () {
     const dr = document.getElementById('workspaceDrawer');
     if (dr) dr.classList.remove('open');
+  };
+
+  // ── unified red/blue tool plane: catalog browser + gated runner ──────────
+  const toolCache = new Map();
+
+  window.loadToolCatalog = async function () {
+    const teamEl = document.getElementById('toolTeamFilter');
+    const qEl = document.getElementById('toolSearch');
+    const team = (teamEl && teamEl.value) || 'all';
+    const q = (qEl && qEl.value) || '';
+    const list = document.getElementById('toolsList');
+    if (list) list.innerHTML = '<div class="ch-muted">Loading catalog…</div>';
+    let data;
+    try {
+      const r = await fetch(`api/chappa/tools?team=${encodeURIComponent(team)}&q=${encodeURIComponent(q)}&limit=80`);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      data = await r.json();
+    } catch (err) {
+      if (list) list.innerHTML = `<div class="ch-muted">Catalog unavailable: ${esc(String(err.message || err))}</div>`;
+      return;
+    }
+    const counts = (data.stats && data.stats.counts) || {};
+    const line = document.getElementById('toolStatsLine');
+    if (line) {
+      line.textContent = `${counts.tools || 0} tools · ${counts.red || 0} red · ${counts.blue || 0} blue · `
+        + `${counts.both || 0} dual-use · showing ${(data.tools || []).length} of ${data.total || 0}`
+        + ` · state ${data.state || '?'}${data.active_target ? ' · target ' + data.active_target : ''}`
+        + (data.allow_red ? ' · red enabled' : ' · red disabled');
+    }
+    if (!list) return;
+    list.innerHTML = '';
+    (data.tools || []).forEach((t) => {
+      toolCache.set(t.id, t);
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = `ch-btn ch-tool-row team-${t.team}`;
+      b.innerHTML = `<span class="ch-tool-name">${esc(t.title)}</span>`
+        + `<span class="ch-tool-meta">${esc((t.team || '').toUpperCase())} · ${esc(t.category || '')}`
+        + `${(t.params || []).length ? ' · params: ' + esc(t.params.join(', ')) : ''}</span>`;
+      b.onclick = () => selectCatalogTool(t.id);
+      list.appendChild(b);
+    });
+    if (!(data.tools || []).length) list.innerHTML = '<div class="ch-muted">No tools matched.</div>';
+  };
+
+  window.selectCatalogTool = function (id) {
+    const t = toolCache.get(id);
+    const detail = document.getElementById('toolDetail');
+    if (!t || !detail) return;
+    const commands = [].concat(t.run || [], (t.usage || []).map((u) => u[1]));
+    const params = t.params || [];
+    detail.innerHTML = '';
+    const head = document.createElement('div');
+    head.className = 'ch-muted';
+    head.textContent = `${t.title} — ${t.team} · ${t.category} · phase ${t.phase}`;
+    detail.appendChild(head);
+    params.forEach((p) => {
+      const inp = document.createElement('input');
+      inp.className = 'ch-input ch-tool-param';
+      inp.dataset.param = p;
+      inp.placeholder = `<${p}>`;
+      detail.appendChild(inp);
+    });
+    if (!commands.length) {
+      const none = document.createElement('div');
+      none.className = 'ch-muted';
+      none.textContent = t.url ? `Reference/installable entry — ${t.url}` : 'This entry declares no runnable command.';
+      detail.appendChild(none);
+      return;
+    }
+    commands.slice(0, 6).forEach((cmd) => {
+      const row = document.createElement('div');
+      row.className = 'ch-row ch-tool-cmdrow';
+      const code = document.createElement('code');
+      code.className = 'ch-tool-cmd';
+      code.textContent = cmd;
+      const dry = document.createElement('button');
+      dry.type = 'button';
+      dry.className = 'ch-btn';
+      dry.textContent = 'Dry';
+      dry.onclick = () => runCatalogTool(id, cmd, true);
+      const run = document.createElement('button');
+      run.type = 'button';
+      run.className = 'ch-btn on';
+      run.textContent = 'Run';
+      run.onclick = () => runCatalogTool(id, cmd, false);
+      row.appendChild(code);
+      row.appendChild(dry);
+      row.appendChild(run);
+      detail.appendChild(row);
+    });
+  };
+
+  window.runCatalogTool = async function (id, command, dryRun) {
+    const out = document.getElementById('toolRunOutput');
+    const params = {};
+    document.querySelectorAll('.ch-tool-param').forEach((inp) => {
+      const v = (inp.value || '').trim();
+      if (v) params[inp.dataset.param] = v;
+    });
+    if (out) out.textContent = dryRun ? 'Checking…' : 'Running…';
+    let d;
+    try {
+      const r = await fetch('api/chappa/tools/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, command, params, dry_run: !!dryRun, timeout_s: 60 })
+      });
+      d = await r.json();
+    } catch (err) {
+      if (out) out.textContent = 'Run failed: ' + String(err.message || err);
+      return;
+    }
+    const lines = [`${d.ok ? 'OK' : 'REFUSED/FAILED'} · ${id}`];
+    if (d.error) lines.push(`error: ${d.error}`);
+    if (d.argv) lines.push(`argv: ${JSON.stringify(d.argv)}`);
+    if (d.exit_code !== undefined && d.exit_code !== null) lines.push(`exit: ${d.exit_code} · ${d.duration_ms || 0}ms`);
+    if (d.install_hint) lines.push(`install: ${d.install_hint}`);
+    if (d.stdout) lines.push('', d.stdout.trim());
+    if (d.stderr) lines.push('', '[stderr]', d.stderr.trim());
+    if (out) out.textContent = lines.join('\n');
+    refreshStatus();
   };
 
   window.hideReply = function () {
