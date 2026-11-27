@@ -1,0 +1,95 @@
+# Threat Intel & Hunting — turning indicators and adversary knowledge into
+# searchable context. Mostly platforms and feeds; the installable entries are the
+# ones that extract and normalize indicators locally.
+category:
+  title: "Threat Intel & Hunting"
+  icon: "🛰️"
+  menu_label: "Threat Intel"
+  description: "IOC platforms, ATT&CK context, and indicator extraction."
+  merge_into: null
+  team: blue
+
+tools:
+  - title: "MISP (Threat Sharing Platform)"
+    kind: resource
+    tags: [threat-intel, detection, reporting]
+    description: "Open-source threat intelligence platform for sharing IOCs, events, and taxonomies across teams."
+    url: "https://www.misp-project.org/"
+    usage:
+      - ["deploy locally", "docker compose up -d  # from the MISP docker repo"]
+      - ["export IOCs for a detector", "curl -k -H 'Authorization: KEY' https://misp.local/events/restSearch"]
+    lab_safe_notes: >-
+      A sharing instance must be access-controlled: feeds contain sensitive
+      indicators and attributions.
+    project_url: "https://github.com/MISP/MISP"
+
+  - title: "OpenCTI (CTI Knowledge Base)"
+    kind: resource
+    tags: [threat-intel, detection]
+    description: "Structured cyber threat intelligence platform built on STIX 2.1 — actors, campaigns, observables, relationships."
+    url: "https://www.opencti.io/"
+    usage:
+      - ["query observables by STIX id", "curl -H 'Authorization: Bearer TOKEN' https://opencti.local/graphql"]
+    lab_safe_notes: >-
+      Read intelligence and mapping data; do not publish third-party intelligence
+      without checking its sharing marking (TLP).
+    project_url: "https://github.com/OpenCTI-Platform/opencti"
+
+  - title: "MITRE ATT&CK Navigator"
+    kind: resource
+    tags: [threat-intel, reporting, detection]
+    description: "Layer editor over ATT&CK technique IDs; used to score coverage and map detections to adversary behavior."
+    url: "https://mitre-attack.github.io/attack-navigator/"
+    usage:
+      - ["map detections to techniques", "open the Navigator and load a layer JSON"]
+      - ["export a coverage layer", "download layer JSON from the navigator UI"]
+    lab_safe_notes: >-
+      Planning aid only; a colored layer is not evidence that a detection fires.
+    project_url: "https://github.com/mitre-attack/attack-navigator"
+
+  - title: "SigmaHQ Rule Repository"
+    kind: resource
+    tags: [detection, log-analysis, threat-intel]
+    description: "The community Sigma rule corpus: vendor-neutral detections that convert to any SIEM backend."
+    url: "https://github.com/SigmaHQ/sigma"
+    usage:
+      - ["clone and convert the corpus", "git clone https://github.com/SigmaHQ/sigma && sigma convert -t splunk -p windows sigma/rules/windows"]
+    lab_safe_notes: >-
+      Community rules vary in quality and false-positive rate; test before enabling.
+    project_url: "https://github.com/SigmaHQ/sigma"
+
+  - title: "YARA Rules Repository"
+    kind: resource
+    tags: [detection, malware-analysis, threat-intel]
+    description: "Aggregated YARA rules (YARA-Rules/rules plus vendor releases) for family and behavior matching."
+    url: "https://github.com/Yara-Rules/rules"
+    usage:
+      - ["scan with the full corpus", "yara -r YARA_RULES_DIR SAMPLES_DIR"]
+    lab_safe_notes: >-
+      Large rule sets are slow; compile them with yarac and scope the scan path.
+    project_url: "https://github.com/Yara-Rules/rules"
+
+  - title: "GreyNoise (Internet Noise Context)"
+    kind: resource
+    tags: [threat-intel, triage]
+    description: "Contextualizes IPs as internet background noise versus targeted activity — useful for triage de-prioritization."
+    url: "https://www.greynoise.io/"
+    usage:
+      - ["look up an IP with the API", "curl -H 'key: API_KEY' https://api.greynoise.io/v3/community/1.2.3.4"]
+    lab_safe_notes: >-
+      Context is advisory; an IP marked benign in the mass-scanner sense can still
+      be incidental to your incident.
+    project_url: "https://docs.greynoise.io/"
+
+  - title: "IOC Finder (Indicator Extraction)"
+    tags: [threat-intel, triage, log-analysis]
+    description: "Extracts and normalizes URLs, domains, IPs, hashes, and emails from free text — turns a report or chat log into indicators."
+    install: {pipx: ioc-finder}
+    run: ["ioc-finder --help"]
+    usage:
+      - ["extract indicators from a file", "ioc-finder -f report.txt"]
+      - ["extract from a sentence", "ioc-finder \"beaconed to evil.example.com and 203.0.113.9\""]
+      - ["machine-readable output", "ioc-finder -f report.txt --json"]
+    lab_safe_notes: >-
+      Defanging is recommended before pasting indicators into tickets or chat.
+    project_url: "https://github.com/fhightower/ioc-finder"

@@ -1,0 +1,92 @@
+# Incident Response — triage, acquisition, and memory/endpoint forensics.
+# These run during or after an incident, so every entry stresses evidence
+# preservation: hashes first, work on copies, and record who collected what.
+category:
+  title: "Incident Response"
+  icon: "🚨"
+  menu_label: "Incident Response"
+  description: "Triage and acquire: Velociraptor, Volatility, KAPE, Loki, Autoruns."
+  merge_into: null
+  team: blue
+
+tools:
+  - title: "Velociraptor (Endpoint DFIR)"
+    tags: [incident-response, triage, evidence-collection, monitoring]
+    description: "Fleet-wide endpoint visibility and DFIR collection using VQL queries and artifact packs."
+    system_pkgs: {which: velociraptor}
+    run: ["velociraptor --version"]
+    usage:
+      - ["run the local collector prompts", "velociraptor.exe --help"]
+      - ["query a host's processes with VQL", "velociraptor query \"SELECT Pid, Name, Exe FROM pslist()\""]
+      - ["collect the Windows.KapeFiles.Targets artifact", "velociraptor artifacts collect Windows.KapeFiles.Targets --args AllFileStores=Y"]
+    lab_safe_notes: >-
+      Collection pulls host data to your control point; scope it to the hosts under
+      investigation and store results per case.
+    project_url: "https://github.com/Velocidex/velociraptor"
+
+  - title: "Volatility 3 (Memory Forensics)"
+    tags: [forensics, memory-dump, malware-analysis, triage]
+    description: "Memory image analysis: processes, network artifacts, injected code, and registry state from a RAM capture."
+    system_pkgs: {which: vol}
+    install: {pipx: volatility3}
+    run: ["vol --help"]
+    usage:
+      - ["identify the image / OS", "vol -f memory.raw windows.info"]
+      - ["process list with tree", "vol -f memory.raw windows.pslist"]
+      - ["find injected code", "vol -f memory.raw windows.malfind"]
+      - ["network connections at capture time", "vol -f memory.raw windows.netscan"]
+    lab_safe_notes: >-
+      Acquire memory with a validated tool before rebooting; analyze the copy and
+      keep the hash of the original image.
+    project_url: "https://github.com/volatilityfoundation/volatility3"
+
+  - title: "Loki (IOC Scanner)"
+    tags: [incident-response, detection, triage, threat-intel]
+    description: "Scans hosts for indicators of compromise: file hashes, YARA rules, filenames, and C2 network signatures."
+    system_pkgs: {which: loki}
+    run: ["loki --help"]
+    usage:
+      - ["scan a path with the bundled signature sets", "loki -p /var/www --onlyinteresting"]
+      - ["scan process memory of running apps", "loki --processmemory"]
+      - ["update signatures first", "loki --update"]
+    lab_safe_notes: >-
+      Read-only scans; --processmemory is heavier and may need elevated rights.
+    project_url: "https://github.com/Neo23x0/Loki"
+
+  - title: "KAPE (Triage Collection)"
+    tags: [incident-response, evidence-collection, forensics]
+    description: "Kroll Artifact Parser and Extractor: targeted collection plus parsing of Windows artifacts into an investigation bundle."
+    run: ["kape.exe --help"]
+    usage:
+      - ["collect VolumeShadow copies and registry hives", "kape.exe --tsource C: --tdest OUT_DIR --target !SANS_Triage"]
+      - ["collect and parse in one pass", "kape.exe --tsource C: --tdest OUT_DIR --target !BasicCollection --mdest OUT_DIR --module !BasicCollection"]
+    lab_safe_notes: >-
+      Windows-only, GUI or CLI. Collection writes a new bundle; verify free space
+      and hash the output.
+    project_url: "https://www.kroll.com/en/services/cyber-risk/incident-response-litigation-support/kroll-artifact-parser-extractor-kape"
+
+  - title: "Autoruns (Persistence Audit)"
+    tags: [incident-response, triage, detection]
+    description: "Sysinternals Autoruns enumerates every autostart location on Windows — the canonical persistence check."
+    run: ["autorunsc.exe -h"]
+    usage:
+      - ["export a full autostart snapshot", "autorunsc.exe -a * -s -h -accepteula -o autoruns.csv"]
+      - ["verify signatures only", "autorunsc.exe -s -v -accepteula"]
+      - ["compare against a baseline", "autorunsc.exe -a * -s -h -accepteula -o after.csv"]
+    lab_safe_notes: >-
+      Export-only usage is read-only; avoid letting anyone "clean" entries before
+      the snapshot is captured and hashed.
+    project_url: "https://learn.microsoft.com/en-us/sysinternals/downloads/autoruns"
+
+  - title: "hashdeep / sha256sum (Evidence Hashing)"
+    tags: [evidence-collection, forensics]
+    description: "Hashfiles and directory trees at acquisition time so later analysis is verifiable."
+    system_pkgs: {which: sha256sum, brew: coreutils}
+    run: ["sha256sum --version"]
+    usage:
+      - ["hash a disk image", "sha256sum disk.img | tee disk.img.sha256"]
+      - ["hash every file in a collection", "find EVIDENCE_DIR -type f -print0 | xargs -0 sha256sum > manifest.txt"]
+      - ["verify later", "sha256sum -c manifest.txt"]
+    lab_safe_notes: >-
+      Run this before copying or analyzing; record the manifest with the case file.
+    project_url: "https://www.gnu.org/software/coreutils/manual/html_node/sha2-utilities.html"

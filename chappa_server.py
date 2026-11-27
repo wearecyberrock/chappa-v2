@@ -22,7 +22,11 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
+
+# Local module: the unified red/blue tool plane. Reads the compiled
+# tools_catalog.json and runs catalog commands without a shell.
+import chappa_tools
 
 ROOT = Path(__file__).resolve().parent
 STATIC_DIR = ROOT / "static"
@@ -114,6 +118,17 @@ def init_db() -> None:
                     description TEXT NOT NULL DEFAULT '',
                     enabled INTEGER NOT NULL DEFAULT 1,
                     updated_at REAL NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS tool_runs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tool_id TEXT NOT NULL,
+                    title TEXT NOT NULL DEFAULT '',
+                    team TEXT NOT NULL DEFAULT '',
+                    argv TEXT NOT NULL DEFAULT '',
+                    exit_code INTEGER,
+                    duration_ms INTEGER,
+                    output TEXT NOT NULL DEFAULT '',
+                    created_at REAL NOT NULL
                 );
                 """
             )
@@ -615,6 +630,45 @@ class ChappaHandler(BaseHTTPRequestHandler):
             return self._send_json({"ok": True, "pins": st["pins"], "focus": st["globe_focus"], "godseye_bridge": st["bridges"]["godseye"]})
         if path == "/api/chappa/modules":
             return self._send_json({"ok": True, "modules": list_hot_modules(), "modules_dir": str(MODULES_DIR)})
+        if path == "/api/chappa/tools":
+            qs = parse_qs(urlparse(self.path).query)
+            one = lambda name, default="": (qs.get(name) or [default])[0]
+            try:
+                limit = int(one("limit", "500"))
+                offset = int(one("offset", "0"))
+            except ValueError:
+                limit, offset = 500, 0
+            res = chappa_tools.list_tools(
+                team=one("team") or None,
+                category=one("category") or None,
+                phase=one("phase") or None,
+                q=one("q") or None,
+                limit=limit,
+                offset=offset,
+            )
+            st = get_status()
+            res["state"] = st["mask_state"]
+            res["active_target"] = st["active_target"]
+            res["allow_red"] = os.environ.get("CHAPPA_ALLOW_RED", "0").strip().lower() in {"1", "true", "yes", "on"}
+            res["stats"] = chappa_tools.stats()
+            return self._send_json(res)
+        if path == "/api/chappa/tools/runs":
+            qs = parse_qs(urlparse(self.path).query)
+            try:
+                limit = max(1, min(int((qs.get("limit") or ["20"])[0]), 200))
+            except ValueError:
+                limit = 20
+            with _DB_LOCK:
+                conn = _db()
+                try:
+                    rows = conn.execute(
+                        "SELECT id, tool_id, title, team, argv, exit_code, duration_ms, output, created_at "
+                        "FROM tool_runs ORDER BY id DESC LIMIT ?",
+                        (limit,),
+                    ).fetchall()
+                finally:
+                    conn.close()
+            return self._send_json({"ok": True, "runs": [dict(r) for r in rows]})
         if path == "/api/chappa/custom-mask.obj":
             p = MODULES_DIR / "custom_mask.obj"
             if not p.is_file():
@@ -683,6 +737,65 @@ class ChappaHandler(BaseHTTPRequestHandler):
             st = get_status()
             _broadcast("status", st)
             return self._send_json(st)
+
+        if path == "/api/chappa/tools/run":
+            st = get_status()
+            tool_id = str(body.get("id") or body.get("tool_id") or "")
+            tool = chappa_tools.get_tool(tool_id) or {}
+            try:
+                timeout_s = int(body.get("timeout_s") or chappa_tools.DEFAULT_TIMEOUT_S)
+            except (TypeError, ValueError):
+                timeout_s = chappa_tools.DEFAULT_TIMEOUT_S
+            result = chappa_tools.run_tool(
+                tool_id,
+                command=body.get("command"),
+                timeout_s=timeout_s,
+                dry_run=bool(body.get("dry_run")),
+                state=st["mask_state"],
+                active_target=st["active_target"],
+                allow_red=body.get("allow_red") if "allow_red" in body else None,
+            )
+            # Only real executions are audited; a refused request leaves a
+            # record of the attempt instead of polluting the run history.
+            if not result.get("dry_run"):
+                output = (result.get("stdout") or "") + (("\n" + result["stderr"]) if result.get("stderr") else "")
+                if result.get("error"):
+                    # A refused or failed attempt is still evidence: keep the
+                    # reason next to the argv instead of an empty output cell.
+                    output = f"[error] {result['error']}\n" + output
+                with _DB_LOCK:
+                    conn = _db()
+                    try:
+                        conn.execute(
+                            "INSERT INTO tool_runs(tool_id, title, team, argv, exit_code, duration_ms, output, created_at) "
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                            (
+                                tool_id,
+                                tool.get("title", "")[:120],
+                                tool.get("team", "")[:16],
+                                " ".join(result.get("argv") or [])[:400],
+                                result.get("exit_code"),
+                                result.get("duration_ms"),
+                                output[:4000],
+                                time.time(),
+                            ),
+                        )
+                        conn.commit()
+                    finally:
+                        conn.close()
+            _broadcast(
+                "tool_run",
+                {
+                    "tool_id": tool_id,
+                    "title": tool.get("title", ""),
+                    "team": tool.get("team", ""),
+                    "ok": bool(result.get("ok")),
+                    "error": result.get("error", ""),
+                    "argv": result.get("argv", []),
+                    "exit_code": result.get("exit_code"),
+                },
+            )
+            return self._send_json(result)
 
         if path in ("/api/chappa/chat", "/api/chappa/command"):
             return self._send_json(handle_chat(body))

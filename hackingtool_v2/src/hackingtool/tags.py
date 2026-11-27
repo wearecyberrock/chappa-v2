@@ -17,6 +17,16 @@ _PHASE = {
     "persistence", "reporting",
 }
 
+# Defensive phases — the mirror of the offensive list above. Kept flat in the
+# taxonomy (same membership check) but grouped here so the dual-use split is
+# readable: a tool carrying any of these is blue-team reachable.
+_DEFENSE_PHASE = {
+    "detection", "monitoring", "log-analysis", "threat-hunting",
+    "threat-intel", "triage", "incident-response", "containment",
+    "evidence-collection", "hardening", "compliance",
+    "vulnerability-management",
+}
+
 # Target surface
 _SURFACE = {
     "web", "network", "wireless", "cloud", "mobile", "active-directory",
@@ -46,7 +56,7 @@ _RESOURCE = {
 }
 
 TAXONOMY: frozenset[str] = frozenset(
-    _PHASE | _SURFACE | _TECHNIQUE | _ARTIFACT | _RESOURCE
+    _PHASE | _DEFENSE_PHASE | _SURFACE | _TECHNIQUE | _ARTIFACT | _RESOURCE
 )
 
 

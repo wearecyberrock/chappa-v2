@@ -1,0 +1,80 @@
+# Vulnerability Management — finding and tracking weaknesses before an adversary
+# does. Dual-use by nature: the same scanners serve an authorized red engagement
+# and a blue remediation program, so this category is tagged `both`.
+category:
+  title: "Vulnerability Management"
+  icon: "🧯"
+  menu_label: "Vuln Management"
+  description: "Scan and track: Nuclei, Trivy, OpenVAS, Dependency-Check, Syft."
+  merge_into: null
+  team: both
+
+tools:
+  - title: "Nuclei (Template Scanning)"
+    tags: [scanner, vuln-scan, web, network]
+    description: "Template-driven vulnerability scanner with a large community template set; the modern baseline web/network sweep."
+    system_pkgs: {which: nuclei}
+    run: ["nuclei -version"]
+    usage:
+      - ["update templates", "nuclei -update-templates"]
+      - ["scan one target", "nuclei -u https://target.example.com -severity critical,high"]
+      - ["scan with specific tags", "nuclei -u https://target.example.com -tags cve,exposure"]
+      - ["scan a list of hosts", "nuclei -l hosts.txt -severity critical,high,medium"]
+    lab_safe_notes: >-
+      Scanning requires authorization for every target in scope; intrusive
+      templates can disrupt fragile services, so rate-limit on production.
+    project_url: "https://github.com/projectdiscovery/nuclei"
+
+  - title: "Trivy (Container & IaC Scanning)"
+    tags: [vuln-scan, cloud, scanner]
+    description: "Finds vulnerable dependencies, misconfigured IaC, secrets, and OS packages in filesystems, images, and repos."
+    system_pkgs: {which: trivy}
+    run: ["trivy --version"]
+    usage:
+      - ["scan a container image", "trivy image app:latest --severity HIGH,CRITICAL"]
+      - ["scan a project filesystem", "trivy fs . --scanners vuln,secret,misconfig"]
+      - ["scan a Kubernetes manifest", "trivy config k8s/"]
+      - ["generate an SBOM", "trivy image --format spdx-json -o sbom.json app:latest"]
+    lab_safe_notes: >-
+      Local scanning is read-only; image pulls hit the registry and may need auth.
+    project_url: "https://github.com/aquasecurity/trivy"
+
+  - title: "OpenVAS / Greenbone (Network Vulnerability Scanner)"
+    kind: resource
+    tags: [vuln-scan, network, scanner]
+    description: "Full network vulnerability management stack with authenticated and unauthenticated scans and a feed of network tests."
+    url: "https://www.openvas.org/"
+    usage:
+      - ["start the compose stack", "docker compose -f greenbone-compose.yml up -d"]
+      - ["list scan configs with the CLI", "gvm-cli socket --xml \"<get_configs/>\""]
+    lab_safe_notes: >-
+      A full authenticated scan is intrusive and slow; agree a scan window and
+      exclude fragile OT/medical devices.
+    project_url: "https://github.com/greenbone/openvas-scanner"
+
+  - title: "OWASP Dependency-Check (SCA)"
+    tags: [vuln-scan, scanner, reporting]
+    description: "Software composition analysis that flags known-vulnerable libraries in a project, with CPE/CPE matching against the NVD."
+    system_pkgs: {which: dependency-check, brew: dependency-check}
+    run: ["dependency-check --version"]
+    usage:
+      - ["scan a project", "dependency-check --project MyApp --scan . --format HTML --out reports/"]
+      - ["update the NVD data first", "dependency-check --updateonly"]
+      - ["fail the build on CVSS >= 7", "dependency-check --scan . --failOnCVSS 7"]
+    lab_safe_notes: >-
+      The initial NVD sync downloads a large dataset; subsequent runs are local.
+    project_url: "https://github.com/jeremylong/DependencyCheck"
+
+  - title: "Syft (SBOM Generation)"
+    tags: [vuln-scan, cloud, reporting]
+    description: "Generates a software bill of materials from images and directories so vulnerabilities can be tracked against known components."
+    system_pkgs: {which: syft}
+    run: ["syft --version"]
+    usage:
+      - ["SBOM for a container image", "syft app:latest -o spdx-json > app.sbom.json"]
+      - ["SBOM for a directory", "syft dir:. -o cyclonedx-json"]
+      - ["pipe into a vulnerability scan", "syft app:latest -o syft-json | grype"]
+    lab_safe_notes: >-
+      Read-only over local artifacts; SBOMs reveal dependency inventory, so treat
+      them as internal documents.
+    project_url: "https://github.com/anchore/syft"

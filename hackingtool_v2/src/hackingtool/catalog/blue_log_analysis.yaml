@@ -1,0 +1,96 @@
+# Log & Endpoint Analysis — read-only inspection of host and network telemetry.
+# These are the everyday blue-team tools: what is running, what talked to what,
+# what does the packet/log actually say. All of them are evidence-safe.
+category:
+  title: "Log & Endpoint Analysis"
+  icon: "🔍"
+  menu_label: "Log Analysis"
+  description: "Interrogate hosts and captures: osquery, tshark, journalctl, evtx parsing."
+  merge_into: null
+  team: blue
+
+tools:
+  - title: "osquery (Host Telemetry SQL)"
+    tags: [log-analysis, monitoring, triage, evidence-collection]
+    description: "Exposes the OS as SQL tables — processes, sockets, packages, users, persistence — so host state can be queried and diffed."
+    system_pkgs: {which: osqueryi, apt: osquery, brew: osquery}
+    run: ["osqueryi --version"]
+    usage:
+      - ["list listening sockets", "osqueryi \"SELECT pid, local_port, family FROM listening_ports;\""]
+      - ["processes with their command line", "osqueryi \"SELECT pid, name, cmdline FROM processes;\""]
+      - ["persistence via scheduled tasks", "osqueryi \"SELECT * FROM scheduled_tasks;\""]
+      - ["recently installed packages", "osqueryi \"SELECT name, version, install_time FROM deb_packages ORDER BY install_time DESC LIMIT 20;\""]
+    lab_safe_notes: >-
+      Read-only queries against the local host. Column names differ per platform —
+      check `osqueryi ".tables"` before writing an automated query.
+    project_url: "https://github.com/osquery/osquery"
+
+  - title: "tshark (Packet Inspection)"
+    tags: [network, log-analysis, pcap, triage]
+    description: "Wireshark's CLI dissector: filter, follow streams, and extract fields from captures without opening a GUI."
+    system_pkgs: {which: tshark, apt: tshark, brew: wireshark}
+    run: ["tshark -v"]
+    usage:
+      - ["conversation summary", "tshark -r capture.pcap -q -z conv,tcp"]
+      - ["HTTP requests with host and URI", "tshark -r capture.pcap -Y http.request -T fields -e http.host -e http.request.uri"]
+      - ["DNS answers only", "tshark -r capture.pcap -Y dns.flags.response==1 -T fields -e dns.qry.name -e dns.a"]
+      - ["follow one TCP stream", "tshark -r capture.pcap -z follow,tcp,ascii,0"]
+    lab_safe_notes: >-
+      Analyzing your own captures is read-only. Live capture requires an authorized
+      interface and may expose credentials in plaintext protocols.
+    project_url: "https://www.wireshark.org/"
+
+  - title: "journalctl (Systemd Log Query)"
+    tags: [log-analysis, triage]
+    description: "Query and correlate systemd journal entries across boots and units."
+    system_pkgs: {which: journalctl}
+    run: ["journalctl --version"]
+    usage:
+      - ["failed units this boot", "journalctl -b -p err --no-pager"]
+      - ["auth events (sshd/sudo)", "journalctl -u ssh -u sudo --since '24 hours ago' --no-pager"]
+      - ["kernel + service messages for a window", "journalctl --since '2026-01-01 00:00' --until '2026-01-02 00:00' -o short-iso --no-pager"]
+    lab_safe_notes: >-
+      Read-only, but the journal contains IP addresses and account names; treat
+      exports as sensitive.
+    project_url: "https://www.freedesktop.org/software/systemd/man/journalctl.html"
+
+  - title: "python-evtx (evtx Dump)"
+    tags: [log-analysis, forensics, evidence-collection]
+    description: "Pure-Python parser for Windows Event Log (.evtx) files, and the reference implementation used by many toolchains."
+    system_pkgs: {which: evtx_dump.py}
+    install: {pipx: python-evtx}
+    run: ["evtx_dump.py --help"]
+    usage:
+      - ["dump a log to XML", "evtx_dump.py Security.evtx > security.xml"]
+      - ["dump and inspect one record", "evtx_dump.py --stop 20 Security.evtx"]
+    lab_safe_notes: >-
+      Parse copies, never the original evidence file, and hash before/after.
+    project_url: "https://github.com/williballenthin/python-evtx"
+
+  - title: "lsof (Open Files & Sockets)"
+    tags: [triage, monitoring]
+    description: "Map processes to open files, sockets, and ports — the fastest way to attribute a suspicious listener."
+    system_pkgs: {which: lsof, apt: lsof, brew: lsof}
+    run: ["lsof -v"]
+    usage:
+      - ["everything listening on TCP", "sudo lsof -nP -iTCP -sTCP:LISTEN"]
+      - ["files held by one process", "lsof -p PID"]
+      - ["who has a deleted-file handle (rootkit smell)", "sudo lsof +L1"]
+    lab_safe_notes: >-
+      Read-only with sudo; output includes command names and paths that may be
+      sensitive in a shared report.
+    project_url: "https://github.com/lsof-org/lsof"
+
+  - title: "ps / ss (Process & Socket Snapshot)"
+    tags: [triage, monitoring]
+    description: "Baseline process trees and socket state with tools guaranteed to exist on the host."
+    system_pkgs: {which: ss}
+    run: ["ps --version"]
+    usage:
+      - ["process tree with full command lines", "ps -eo pid,ppid,user,etime,cmd --forest"]
+      - ["all TCP sockets with owning process", "ss -tunap"]
+      - ["top memory consumers", "ps -eo pid,user,pmem,cmd --sort=-pmem | head -20"]
+    lab_safe_notes: >-
+      Read-only. Snapshot before and after any containment action so the change is
+      attributable.
+    project_url: "https://man7.org/linux/man-pages/man1/ps.1.html"

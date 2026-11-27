@@ -1,0 +1,99 @@
+# Detection Engineering — the blue-side mirror of the offensive catalog.
+# These are the tools that turn telemetry into detections: rule authoring and
+# conversion (Sigma), signature matching (YARA), and network/log sensors.
+# Every command is a canonical invocation of the real tool; placeholders such as
+# RULES_DIR or EVTX_DIR stand for paths you control.
+category:
+  title: "Detection Engineering"
+  icon: "🛡️"
+  menu_label: "Detection"
+  description: "Author, convert, and run detections: Sigma, YARA, Suricata, Chainsaw, Hayabusa."
+  merge_into: null
+  team: blue
+
+tools:
+  - title: "Sigma CLI (Rule Conversion)"
+    tags: [detection, log-analysis, reporting]
+    description: "sigma-cli converts Sigma rules into backend queries (Splunk, Elastic, Sentinel, QRadar)."
+    system_pkgs: {which: sigma}
+    install: {pipx: sigma-cli}
+    run: ["sigma --help"]
+    usage:
+      - ["install backends", "sigma plugin install splunk elasticsearch"]
+      - ["convert one rule to Splunk", "sigma convert -t splunk RULES_DIR/process_creation.yml"]
+      - ["convert a whole rules tree to Elastic", "sigma convert -t lucene -p ecs_windows RULES_DIR"]
+    lab_safe_notes: >-
+      Conversion is offline and read-only. Validate converted queries against your
+      own SIEM index naming before enabling them as live alerts.
+    project_url: "https://github.com/SigmaHQ/sigma-cli"
+
+  - title: "YARA (Signature Scanning)"
+    tags: [detection, malware-analysis, forensics]
+    description: "Pattern-matching engine for malware families and suspicious artifacts; the signature format most EDR/AV pipelines consume."
+    system_pkgs: {which: yara, apt: yara, brew: yara}
+    run: ["yara --help"]
+    usage:
+      - ["scan a directory recursively", "yara -r RULES_DIR/malware.yar SAMPLES_DIR"]
+      - ["scan a memory image", "yara -r RULES_DIR/malware.yar memory.raw"]
+      - ["compile rules to check for errors", "yarac RULES_DIR/malware.yar /tmp/compiled.yarc"]
+    lab_safe_notes: >-
+      Scanning files you own or were asked to examine is safe; running untrusted
+      samples through YARA does not execute them, but sample handling hygiene still
+      applies.
+    project_url: "https://github.com/VirusTotal/yara"
+
+  - title: "Suricata (Network IDS)"
+    tags: [detection, network, monitoring]
+    description: "Signature and protocol-aware IDS/IPS with EVE JSON output that feeds SIEM pipelines."
+    system_pkgs: {which: suricata, apt: suricata, brew: suricata}
+    run: ["suricata --build-info"]
+    usage:
+      - ["validate the config", "suricata -T -c /etc/suricata/suricata.yaml"]
+      - ["replay a pcap through the ruleset", "suricata -r capture.pcap -c /etc/suricata/suricata.yaml -l out/"]
+      - ["update the rule set", "suricata-update"]
+    lab_safe_notes: >-
+      Analyze captures you own or are authorized to review. Running inline IPS mode
+      on a production path can drop traffic — test offline first.
+    project_url: "https://github.com/OISF/suricata"
+
+  - title: "Chainsaw (Event Log Hunting)"
+    tags: [detection, log-analysis, threat-hunting, forensics]
+    description: "Fast Sigma-powered hunting over Windows event logs; finds suspicious activity an analyst would otherwise grep by hand."
+    system_pkgs: {which: chainsaw}
+    run: ["chainsaw --help"]
+    usage:
+      - ["hunt an evtx directory with Sigma rules", "chainsaw hunt EVTX_DIR -s rules/sigma --mapping mappings/sigma-event-logs-all.yml"]
+      - ["dump matches for one artifact", "chainsaw search EVTX_DIR --json"]
+      - ["extract all detections to a file", "chainsaw hunt EVTX_DIR -s rules/sigma -o results/"]
+    lab_safe_notes: >-
+      Read-only over collected evidence. Point it at copies, not the live evidence
+      store, so the original chain of custody is preserved.
+    project_url: "https://github.com/WithSecureLabs/chainsaw"
+
+  - title: "Hayabusa (EVTX Timeline Analysis)"
+    tags: [detection, log-analysis, threat-hunting, forensics]
+    description: "Windows event log threat hunting and fast forensics timeline generator driven by Sigma-style rules."
+    system_pkgs: {which: hayabusa}
+    run: ["hayabusa help"]
+    usage:
+      - ["scan a folder of evtx files", "hayabusa csv-timeline -d EVTX_DIR -o timeline.csv"]
+      - ["update detection rules", "hayabusa update-rules"]
+      - ["rescan with the summary report", "hayabusa json-timeline -d EVTX_DIR -o timeline.json"]
+    lab_safe_notes: >-
+      Works on exported logs. Treat generated timelines as sensitive: they contain
+      usernames, hostnames, and process command lines.
+    project_url: "https://github.com/Yamato-Security/hayabusa"
+
+  - title: "Zeek (Network Security Monitor)"
+    tags: [detection, network, monitoring, pcap]
+    description: "Protocol analyzer that turns traffic into structured connection, DNS, TLS, and file logs."
+    system_pkgs: {which: zeek, apt: zeek, brew: zeek}
+    run: ["zeek --version"]
+    usage:
+      - ["analyze a pcap offline", "zeek -r capture.pcap local"]
+      - ["live capture on an interface", "sudo zeek -i eth0 local"]
+      - ["load the file-analysis framework", "zeek -r capture.pcap local frameworks/files/extract-all-files"]
+    lab_safe_notes: >-
+      Live capture needs a mirror/SPAN port and authorization; offline pcap analysis
+      is read-only.
+    project_url: "https://github.com/zeek/zeek"
