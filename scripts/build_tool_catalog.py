@@ -61,8 +61,11 @@ RED_TAGS = {
 BLUE_CATEGORY_HINTS = (
     "forensic", "detection", "monitoring", "incident", "threat intel",
     "threat hunt", "hardening", "compliance", "malware", "vulnerability",
-    "log ", "logs", "defensive", "blue",
+    "defensive", "blue",
 )
+# Matched as whole words, not substrings: "catalog overlays" must not read as
+# a logging category just because "log " appears inside "catalog ".
+BLUE_CATEGORY_WORDS = {"log", "logs", "logging"}
 
 PHASE_TAGS = (
     "recon", "osint", "scanner", "port-scan", "subdomain-enum", "vuln-scan",
@@ -193,7 +196,11 @@ def category_team(title: str, explicit: str | None) -> str:
     if explicit in ("red", "blue", "both"):
         return explicit
     low = norm(title)
-    return "blue" if any(h in low for h in BLUE_CATEGORY_HINTS) else "red"
+    if any(h in low for h in BLUE_CATEGORY_HINTS):
+        return "blue"
+    if BLUE_CATEGORY_WORDS.intersection(re.findall(r"[a-z]+", low)):
+        return "blue"
+    return "red"
 
 
 def tool_team(base: str, tags: list[str]) -> str:

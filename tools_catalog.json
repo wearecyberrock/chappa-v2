@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-11-27T13:11:13+00:00",
+  "generated_at": "2026-11-27T13:14:17+00:00",
   "source": {
     "hackingtool": "hackingtool_v2",
     "catalog_files": 29,
@@ -9,9 +9,9 @@
   "stats": {
     "tools": 315,
     "categories": 39,
-    "red": 253,
+    "red": 254,
     "blue": 46,
-    "both": 16,
+    "both": 15,
     "runnable": 218
   },
   "categories": [
@@ -322,7 +322,7 @@
     {
       "id": "catalog-overlays",
       "title": "Catalog Overlays",
-      "team": "blue",
+      "team": "red",
       "description": "",
       "icon": "",
       "tool_count": 1
@@ -11165,7 +11165,7 @@
       "title": "StegnoCracker",
       "category": "Catalog Overlays",
       "category_id": "catalog-overlays",
-      "team": "both",
+      "team": "red",
       "phase": "recon",
       "tags": [
         "steganography",
