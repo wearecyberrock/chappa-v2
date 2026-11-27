@@ -347,6 +347,18 @@ body::before {
    view while browsing a long catalog. */
 #toolsList { max-height: 300px; overflow-y: auto; padding-right: 4px; }
 #toolDetail { max-height: 240px; overflow-y: auto; }
+
+/* ── raw terminal pane ───────────────────────────────────────────────── */
+.ch-term-host {
+  height: 420px;
+  margin-top: 6px;
+  padding: 6px;
+  overflow: hidden;
+  background: #0a0204;
+  border: 1px solid rgba(255, 30, 56, 0.35);
+  border-radius: 6px;
+}
+.ch-term-host .xterm { height: 100%; }
 .ch-tool-cmd {
   flex: 1 1 auto;
   font-family: ui-monospace, Menlo, Consolas, monospace;

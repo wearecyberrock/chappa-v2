@@ -28,6 +28,7 @@ from urllib.parse import parse_qs, urlparse
 # Local module: the unified red/blue tool plane. Reads the compiled
 # tools_catalog.json and runs catalog commands without a shell.
 import chappa_tools
+import chappa_term
 
 ROOT = Path(__file__).resolve().parent
 STATIC_DIR = ROOT / "static"
@@ -129,6 +130,15 @@ def init_db() -> None:
                     exit_code INTEGER,
                     duration_ms INTEGER,
                     output TEXT NOT NULL DEFAULT '',
+                    created_at REAL NOT NULL
+                );
+                -- Terminal audit: every session launch and every submitted line.
+                CREATE TABLE IF NOT EXISTS term_log (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session TEXT NOT NULL,
+                    kind TEXT NOT NULL DEFAULT '',
+                    event TEXT NOT NULL DEFAULT '',
+                    detail TEXT NOT NULL DEFAULT '',
                     created_at REAL NOT NULL
                 );
                 """
@@ -499,6 +509,20 @@ def defensive_posture_check(host: str) -> dict[str, Any]:
     return {"ok": True, "report": report, "case": triage["case"], "status": get_status()}
 
 
+def _term_log(session: str, kind: str, event: str, detail: str) -> None:
+    """Audit a terminal launch or submitted line."""
+    with _DB_LOCK:
+        conn = _db()
+        try:
+            conn.execute(
+                "INSERT INTO term_log(session, kind, event, detail, created_at) VALUES (?, ?, ?, ?, ?)",
+                (session, kind[:24], event[:16], detail[:400], time.time()),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+
 def record_tool_run(tool_id: str, result: dict[str, Any]) -> None:
     """Persist one execution attempt and broadcast it on the SSE bus.
 
@@ -507,6 +531,21 @@ def record_tool_run(tool_id: str, result: dict[str, Any]) -> None:
     from requests that never happened.
     """
     tool = chappa_tools.get_tool(tool_id) or {}
+    # A red-team run from IDLE starts the engagement, and an inline target
+    # becomes the recorded engagement target. Persisting that here is what makes
+    # "click a tool and it runs" true without a separate setup step.
+    if result.get("state_change") or result.get("target"):
+        with _DB_LOCK:
+            conn = _db()
+            try:
+                if result.get("state_change"):
+                    _set_kv(conn, "mask_state", str(result["state_change"]))
+                if result.get("target") and not _get_kv(conn, "active_target", ""):
+                    _set_kv(conn, "active_target", str(result["target"])[:200])
+                conn.commit()
+            finally:
+                conn.close()
+        _broadcast("status", get_status())
     if not result.get("dry_run"):
         output = (result.get("stdout") or "") + (("\n" + result["stderr"]) if result.get("stderr") else "")
         if result.get("error"):
@@ -801,6 +840,16 @@ class ChappaHandler(BaseHTTPRequestHandler):
             res["allow_red"] = os.environ.get("CHAPPA_ALLOW_RED", "0").strip().lower() in {"1", "true", "yes", "on"}
             res["stats"] = chappa_tools.stats()
             return self._send_json(res)
+        if path == "/api/chappa/term":
+            return self._send_json({**chappa_term.profiles(), "ok": True, "sessions": chappa_term.list_sessions()})
+        if path == "/api/chappa/term/read":
+            qs = parse_qs(urlparse(self.path).query)
+            sid = (qs.get("session") or [""])[0]
+            try:
+                cursor = int((qs.get("cursor") or ["0"])[0])
+            except ValueError:
+                cursor = 0
+            return self._send_json(chappa_term.read(sid, cursor))
         if path == "/api/chappa/tools/runs":
             qs = parse_qs(urlparse(self.path).query)
             try:
@@ -886,6 +935,29 @@ class ChappaHandler(BaseHTTPRequestHandler):
             st = get_status()
             _broadcast("status", st)
             return self._send_json(st)
+
+        if path == "/api/chappa/term/start":
+            kind = str(body.get("kind") or "pwsh")
+            try:
+                cols = max(40, min(int(body.get("cols") or 120), 300))
+                rows = max(10, min(int(body.get("rows") or 32), 100))
+            except (TypeError, ValueError):
+                cols, rows = 120, 32
+            res = chappa_term.start(kind, custom=body.get("command"), cols=cols, rows=rows)
+            if res.get("ok"):
+                _term_log(res["session"], kind, "start", " ".join(res.get("argv") or [])[:400])
+            return self._send_json(res)
+
+        if path == "/api/chappa/term/input":
+            sid = str(body.get("session") or "")
+            data = str(body.get("data") or "")
+            res = chappa_term.write(sid, data)
+            if res.get("ok"):
+                _term_log(sid, "", "input", data[:300])
+            return self._send_json(res)
+
+        if path == "/api/chappa/term/stop":
+            return self._send_json(chappa_term.stop(str(body.get("session") or "")))
 
         if path == "/api/chappa/tools/run":
             st = get_status()

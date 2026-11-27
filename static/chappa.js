@@ -153,6 +153,10 @@
     document.querySelectorAll('.ch-dtab').forEach((b) => b.classList.toggle('on', b.dataset.dtab === paneName));
     try { history.replaceState(null, '', '#' + paneName); } catch (_) {}
     if (paneName === 'tools') loadToolCatalog();
+    if (paneName === 'term') {
+      ensureTerm();
+      setTimeout(() => { try { if (termFit) termFit.fit(); } catch (_) {} }, 60);
+    }
     if (paneName === 'globe' && !globe) {
       const gc = document.getElementById('globeCanvas');
       if (gc && window.ChappaGlobe) {
@@ -172,6 +176,103 @@
 
   // ── unified red/blue tool plane: catalog browser + gated runner ──────────
   const toolCache = new Map();
+
+  // ── raw terminal: xterm.js front end over a ConPTY session ───────────────
+  let term = null, termFit = null, termSession = null, termCursor = 0, termTimer = null;
+
+  function ensureTerm() {
+    if (term || !window.Terminal) return;
+    const host = document.getElementById('termHost');
+    if (!host) return;
+    term = new window.Terminal({
+      cursorBlink: true,
+      fontSize: 12,
+      fontFamily: 'ui-monospace, Menlo, Consolas, monospace',
+      scrollback: 3000,
+      theme: {
+        background: '#0a0204',
+        foreground: '#ffd7de',
+        cursor: '#ff1e38',
+        selectionBackground: '#3a0b13',
+        black: '#1a0508', red: '#ff3b52', green: '#5ee08a',
+        yellow: '#f0b429', blue: '#35b7ff', magenta: '#c56bff',
+        cyan: '#4de2e2', white: '#f6e9ec'
+      }
+    });
+    term.open(host);
+    if (window.FitAddon) {
+      termFit = new window.FitAddon.FitAddon();
+      term.loadAddon(termFit);
+      try { termFit.fit(); } catch (_) {}
+    }
+    // Forward real keystrokes, which is what makes an interactive TUI work.
+    term.onData((data) => { if (termSession) sendTermRaw(data); });
+  }
+
+  window.startTerm = async function () {
+    ensureTerm();
+    const kindEl = document.getElementById('termProfile');
+    const customEl = document.getElementById('termCustom');
+    const status = document.getElementById('termStatus');
+    const kind = kindEl ? kindEl.value : 'pwsh';
+    const custom = customEl ? customEl.value.trim() : '';
+    const cols = term && term.cols ? term.cols : 120;
+    const rows = term && term.rows ? term.rows : 32;
+    if (status) status.textContent = 'starting…';
+    const r = await fetch('api/chappa/term/start', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind, command: custom, cols, rows })
+    });
+    const d = await r.json();
+    if (!d.ok) {
+      if (status) status.textContent = `start failed: ${d.error || ''}${d.hint ? ' — ' + d.hint : ''}`;
+      return;
+    }
+    termSession = d.session;
+    termCursor = 0;
+    if (term) { term.reset(); term.focus(); }
+    if (status) status.textContent = `${d.kind} · ${d.pty ? 'ConPTY' : 'pipe'} · ${d.session}`;
+    if (termTimer) clearInterval(termTimer);
+    termTimer = setInterval(pollTerm, 180);
+  };
+
+  window.pollTerm = async function () {
+    if (!termSession) return;
+    try {
+      const r = await fetch(`api/chappa/term/read?session=${encodeURIComponent(termSession)}&cursor=${termCursor}`);
+      const d = await r.json();
+      if (!d.ok) return;
+      if (d.data) {
+        if (term) term.write(d.data);
+        termCursor = d.cursor;
+      }
+      if (!d.alive) {
+        const status = document.getElementById('termStatus');
+        if (status) status.textContent += ' · ended';
+        clearInterval(termTimer); termTimer = null;
+      }
+    } catch (_) {}
+  };
+
+  function sendTermRaw(data) {
+    if (!termSession) return;
+    fetch('api/chappa/term/input', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session: termSession, data })
+    }).catch(() => {});
+  }
+
+  window.stopTerm = async function () {
+    if (!termSession) return;
+    await fetch('api/chappa/term/stop', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session: termSession })
+    }).catch(() => {});
+    termSession = null;
+    if (termTimer) { clearInterval(termTimer); termTimer = null; }
+    const status = document.getElementById('termStatus');
+    if (status) status.textContent = 'Closed.';
+  };
 
   window.loadToolCatalog = async function () {
     const teamEl = document.getElementById('toolTeamFilter');

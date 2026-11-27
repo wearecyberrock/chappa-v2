@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Chappa V2 — Hermes Cybersecurity Core</title>
   <link rel="stylesheet" href="static/chappa.css">
+  <link rel="stylesheet" href="static/vendor/xterm.css">
 </head>
 <body>
   <div class="ch-shell">
@@ -23,6 +24,7 @@
         <button type="button" class="ch-btn" onclick="openDrawer('vigil')">Vigil SOC</button>
         <button type="button" class="ch-btn" onclick="openDrawer('globe')">God's Eye</button>
         <button type="button" class="ch-btn" onclick="openDrawer('tools')">Tools</button>
+        <button type="button" class="ch-btn" onclick="openDrawer('term')">Terminal</button>
         <button type="button" class="ch-btn" onclick="openDrawer('audit')">Posture Audit</button>
         <button type="button" class="ch-btn" onclick="openDrawer('chat')">Chat Log</button>
         <button type="button" id="voiceBtn" class="ch-btn on" title="Speak replies via Assimilis Fish Audio / Voice Studio (eyes glow live)" onclick="toggleVoice()">Voice: Fish/Studio</button>
@@ -91,6 +93,7 @@
             <button type="button" class="ch-dtab" data-dtab="vigil" onclick="openDrawer('vigil')">Vigil SOC</button>
             <button type="button" class="ch-dtab" data-dtab="globe" onclick="openDrawer('globe')">God's Eye</button>
             <button type="button" class="ch-dtab" data-dtab="tools" onclick="openDrawer('tools')">Tools</button>
+            <button type="button" class="ch-dtab" data-dtab="term" onclick="openDrawer('term')">Terminal</button>
             <button type="button" class="ch-dtab" data-dtab="audit" onclick="openDrawer('audit')">Posture</button>
             <button type="button" class="ch-dtab" data-dtab="modules" onclick="openDrawer('modules')">Modules</button>
             <button type="button" class="ch-dtab" data-dtab="chat" onclick="openDrawer('chat')">Chat</button>
@@ -157,6 +160,25 @@
             <div id="modulesList" class="ch-list"></div>
           </section>
 
+          <!-- Raw Terminal Pane (ConPTY via pywinpty; xterm.js front end) -->
+          <section id="pane-term" class="ch-pane">
+            <div class="ch-k">RAW TERMINAL · CONPTY</div>
+            <div class="ch-row">
+              <select id="termProfile" class="ch-select">
+                <option value="pwsh">PowerShell</option>
+                <option value="wsl">WSL (Ubuntu)</option>
+                <option value="cmd">cmd.exe</option>
+                <option value="hackingtool">hackingtool (TUI)</option>
+                <option value="custom">custom…</option>
+              </select>
+              <button type="button" class="ch-btn on" onclick="startTerm()">Open</button>
+              <button type="button" class="ch-btn" onclick="stopTerm()">Close</button>
+            </div>
+            <input id="termCustom" class="ch-input" placeholder="custom command line (used when profile = custom)">
+            <div id="termStatus" class="ch-muted">Closed. Pick a profile and press Open.</div>
+            <div id="termHost" class="ch-term-host"></div>
+          </section>
+
           <!-- Unified Red/Blue Tool Catalog Pane -->
           <section id="pane-tools" class="ch-pane">
             <div class="ch-k">UNIFIED TOOL CATALOG · RED + BLUE</div>
@@ -195,6 +217,8 @@
     </form>
   </div>
 
+  <script src="static/vendor/xterm.min.js"></script>
+  <script src="static/vendor/addon-fit.min.js"></script>
   <script src="static/chappa-mask.js"></script>
   <script src="static/chappa-globe.js"></script>
   <script src="static/chappa.js"></script>

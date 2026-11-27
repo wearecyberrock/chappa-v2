@@ -115,7 +115,7 @@ def list_tools(
     total = len(tools)
     limit = max(1, min(int(limit or 500), 2000))
     offset = max(0, int(offset or 0))
-    page = tools[offset : offset + limit]
+    page = [dict(t, installed=tool_installed(t)) for t in tools[offset : offset + limit]]
     return {
         "ok": "error" not in data,
         "total": total,
@@ -154,24 +154,70 @@ def _allowed_binaries(tool: dict[str, Any]) -> set[str]:
 def check_policy(tool: dict[str, Any], state: str, active_target: str, allow_red: bool) -> tuple[bool, str]:
     """Decide whether this tool may run right now.
 
-    Blue/defensive and dual-use reporting work is always permitted. Red-team
-    action requires (a) a recorded target, (b) the operator's red-team switch,
-    and (c) a non-idle state, so a stray click cannot start an engagement.
+    Blue/defensive work is always permitted. Red-team work needs the operator's
+    switch plus *some* target — either already recorded as the engagement target
+    or supplied with this run. The state is not a gate: starting a red-team run
+    from IDLE simply moves the mask to RECON (that is what RECON means), so the
+    operator is not made to click a state button first.
     """
     team = tool.get("team", "red")
     if team == "blue":
         return True, "defensive tooling is always available"
     if not allow_red:
-        return False, "red-team execution is disabled (CHAPPA_ALLOW_RED is off)"
+        return False, "red-team execution is disabled (restart chappa with CHAPPA_ALLOW_RED=1 to enable it)"
     if not active_target:
-        return False, "no active target recorded — set one on the state endpoint first"
-    if state == "IDLE":
-        return False, f"state is IDLE — move to RECON/ALERT/CONTAINED before running red-team tools"
+        return (
+            False,
+            "no engagement target yet — type one in the ENGAGEMENT TARGET box (Tools pane) "
+            "or pass it with the run, e.g. target=127.0.0.1",
+        )
     return True, "authorized engagement"
+
+
+# Parameter names that carry the thing being acted on. Filling one of these is
+# how an operator names the engagement target inline instead of pre-recording it.
+_TARGET_PARAM_KEYS = ("target", "host", "hostname", "ip", "domain", "url", "email")
+
+
+def _supplied_target(params: dict[str, Any] | None) -> str:
+    for key in _TARGET_PARAM_KEYS:
+        value = (params or {}).get(key)
+        if value:
+            return str(value).strip()
+    return ""
 
 
 def _clean_env() -> dict[str, str]:
     return {k: v for k, v in os.environ.items() if not _SECRET_ENV.search(k)}
+
+
+_which_cache: dict[str, bool] = {}
+
+
+def tool_installed(tool: dict[str, Any]) -> bool | None:
+    """Whether any binary this entry declares exists on this host.
+
+    ``None`` means the entry declares no command at all (reference/install-only),
+    which is different from "installed or not".
+    """
+    names = _allowed_binaries(tool)
+    if not names:
+        return None
+    key = "|".join(sorted(names))
+    if key not in _which_cache:
+        _which_cache[key] = any(shutil.which(name) for name in names)
+    return _which_cache[key]
+
+
+def _engage_state(tool: dict[str, Any], state: str) -> dict[str, Any]:
+    """A red-team run from IDLE starts the engagement.
+
+    Returning the move rather than performing it keeps this module free of state
+    storage; the caller persists it and broadcasts the mask change.
+    """
+    if tool.get("team") in ("red", "both") and state == "IDLE":
+        return {"state_change": "RECON", "state_reason": "red-team run started the engagement"}
+    return {}
 
 
 def run_tool(
@@ -201,7 +247,21 @@ def run_tool(
 
     if allow_red is None:
         allow_red = os.environ.get("CHAPPA_ALLOW_RED", "0").strip().lower() in {"1", "true", "yes", "on"}
-    ok, reason = check_policy(tool, state, active_target, allow_red)
+
+    # The engagement target may be recorded ahead of time or supplied with the
+    # run itself. Supplying it inline adopts it as the engagement target, so a
+    # single tool click is enough to start working.
+    supplied = _supplied_target(params)
+    effective_target = active_target or supplied
+    if active_target and supplied and active_target.lower() != supplied.lower():
+        return {
+            "ok": False,
+            "error": f"target mismatch: the recorded engagement target is '{active_target}' "
+            f"but this run targets '{supplied}'",
+            "hint": "clear or change the engagement target first if the engagement really moved",
+        }
+
+    ok, reason = check_policy(tool, state, effective_target, allow_red)
     if not ok:
         return {"ok": False, "error": reason, "policy": {"team": tool.get("team"), "state": state}}
 
@@ -321,6 +381,8 @@ def run_tool(
             "install_hint": "" if resolved else (tool.get("url") or ""),
             "tool": tool_id,
             "team": tool.get("team"),
+            "target": effective_target,
+            **_engage_state(tool, state),
         }
 
     if resolved is None:
@@ -329,6 +391,7 @@ def run_tool(
             "error": f"'{unwrapped[0]}' is not installed on this host",
             "install_hint": tool.get("url") or "",
             "argv": argv,
+            "target": effective_target,
         }
 
     timeout_s = max(1, min(int(timeout_s or DEFAULT_TIMEOUT_S), MAX_TIMEOUT_S))
@@ -354,6 +417,8 @@ def run_tool(
             "truncated": len(proc.stdout) > MAX_OUTPUT_BYTES or len(proc.stderr) > MAX_OUTPUT_BYTES,
             "tool": tool_id,
             "team": tool.get("team"),
+            "target": effective_target,
+            **_engage_state(tool, state),
         }
     except subprocess.TimeoutExpired as exc:
         return {
