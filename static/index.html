@@ -3,84 +3,175 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Chappa V2 — Cyber Command Center</title>
+  <title>Chappa V2 — Hermes Cybersecurity Core</title>
   <link rel="stylesheet" href="static/chappa.css">
 </head>
 <body>
-  <div class="ch-app">
+  <div class="ch-shell">
+    <!-- Top HUD Bar (Modified Hermes Core Header) -->
     <header class="ch-topbar">
       <div class="ch-brand">
-        <span>CHAPPA V2</span>
-        <span class="ch-brand-tag">HERMES CYBER AGENT</span>
-        <span id="statusPill" class="ch-pill">IDLE · 0 ALERTS</span>
+        <span class="ch-dot" id="brandDot"></span>
+        <span class="ch-title">CHAPPA V2</span>
+        <span class="ch-tag">HERMES CYBER CORE</span>
+        <span id="statusPill" class="ch-pill">IDLE · 0 OPEN</span>
       </div>
-      <div class="ch-actions">
-        <button type="button" class="ch-btn on" data-view-btn onclick="switchView('mask', this)">3D Mask</button>
-        <button type="button" class="ch-btn" data-view-btn onclick="switchView('globe', this)">God's Eye Globe</button>
-        <button type="button" class="ch-btn" data-view-btn onclick="switchView('soc', this)">Vigil SOC</button>
-        <button type="button" id="fpsBtn" class="ch-btn" data-fps="12" onclick="toggleFps()">12fps (On Twos)</button>
+      <div class="ch-top-controls">
+        <select id="modelSelect" class="ch-select" title="Model from Assimilis / Hermes" onchange="onModelChange(this.value)">
+          <option value="hermes-auto">Hermes Auto (Antigravity + Local)</option>
+        </select>
+        <button type="button" class="ch-btn" onclick="openDrawer('vigil')">Vigil SOC</button>
+        <button type="button" class="ch-btn" onclick="openDrawer('globe')">God's Eye</button>
+        <button type="button" class="ch-btn" onclick="openDrawer('audit')">Posture Audit</button>
+        <button type="button" class="ch-btn" onclick="openDrawer('chat')">Chat Log</button>
+        <button type="button" id="fpsBtn" class="ch-btn" data-fps="60" onclick="toggleFps()">60fps</button>
       </div>
     </header>
 
-    <aside class="ch-sidebar">
-      <div class="ch-card">
-        <div class="ch-k">ACTIVE TARGET</div>
-        <input id="targetInput" class="ch-input" placeholder="domain, IP, or CIDR (e.g. example.com)">
-        <div class="ch-k">MASK STATE</div>
-        <div class="ch-row">
-          <button type="button" class="ch-btn" onclick="setMaskState('IDLE')">Idle</button>
-          <button type="button" class="ch-btn" onclick="setMaskState('RECON')">Recon</button>
-          <button type="button" class="ch-btn danger" onclick="setMaskState('ALERT')">Alert</button>
-          <button type="button" class="ch-btn" onclick="setMaskState('CONTAINED')">Lock</button>
+    <!-- Full-Bleed Core Stage: WebGL2 3D Hacker Mask + Orbital Nodes -->
+    <main class="ch-core-stage">
+      <canvas id="maskStageCanvas"></canvas>
+      <canvas id="maskHudCanvas"></canvas>
+
+      <!-- Floating Top-Left Live Telemetry HUD -->
+      <aside class="ch-kpi-hud">
+        <div class="ch-kpi"><span class="ch-kpi-k">VIGIL SOC</span><b id="kpiCases">0</b></div>
+        <div class="ch-kpi"><span class="ch-kpi-k">GOD'S EYE PINS</span><b id="kpiPins">0</b></div>
+        <div class="ch-kpi"><span class="ch-kpi-k">ASSIMILIS LINK</span><b id="kpiLink">STANDBY</b></div>
+        <div class="ch-kpi"><span class="ch-kpi-k">STATE</span>
+          <div class="ch-state-dots">
+            <button type="button" class="ch-sdot" data-st="IDLE" onclick="setMaskState('IDLE')">IDLE</button>
+            <button type="button" class="ch-sdot" data-st="RECON" onclick="setMaskState('RECON')">SCAN</button>
+            <button type="button" class="ch-sdot alert" data-st="ALERT" onclick="setMaskState('ALERT')">ALERT</button>
+            <button type="button" class="ch-sdot ok" data-st="CONTAINED" onclick="setMaskState('CONTAINED')">LOCK</button>
+          </div>
         </div>
+      </aside>
+
+      <!-- Assimilis-Core-Style Orbital Ring Nodes around the 3D Hacker Mask -->
+      <div class="ch-orbit-nodes">
+        <button type="button" class="ch-node n-tl" onclick="openDrawer('vigil')">
+          <span class="ch-node-tag">AI SOC</span>
+          <strong>Vigil SOC</strong>
+          <small id="nodeVigilSub">0 open cases</small>
+        </button>
+        <button type="button" class="ch-node n-tr" onclick="openDrawer('globe')">
+          <span class="ch-node-tag">3D GEO</span>
+          <strong>God's Eye View</strong>
+          <small id="nodeGlobeSub">3 live pins</small>
+        </button>
+        <button type="button" class="ch-node n-bl" onclick="openDrawer('audit')">
+          <span class="ch-node-tag">DEFENSIVE</span>
+          <strong>Posture &amp; IOCs</strong>
+          <small>DNS · TLS · Headers</small>
+        </button>
+        <button type="button" class="ch-node n-br" onclick="openDrawer('modules')">
+          <span class="ch-node-tag">HOT UPGRADE</span>
+          <strong>Modules &amp; Bridge</strong>
+          <small id="nodeModSub">~/.chappa/modules</small>
+        </button>
       </div>
 
-      <div class="ch-card">
-        <div class="ch-k">RECENT FINDINGS</div>
-        <div id="findingsList" class="ch-list"><div class="ch-muted">Loading…</div></div>
+      <!-- Floating Latest Hermes Reply Pill -->
+      <div id="replyToast" class="ch-reply-toast">
+        <div class="ch-reply-head">
+          <span>CHAPPA V2 · HERMES RESPONSE</span>
+          <button type="button" class="ch-close-mini" onclick="hideReply()">×</button>
+        </div>
+        <div id="replyBody" class="ch-reply-body"></div>
       </div>
 
-      <div class="ch-card">
-        <div class="ch-k">HOT MODULES (~/.chappa/modules)</div>
-        <div class="ch-row">
-          <input id="modNameInput" class="ch-input" style="flex:1 1 auto" placeholder="module-id">
-          <button type="button" class="ch-btn on" onclick="installDemoModule()">+ Hot Add</button>
+      <!-- Slide-Over Workspace Drawer (Vigil / God's Eye / Audit / Modules / Chat) -->
+      <aside id="workspaceDrawer" class="ch-drawer">
+        <div class="ch-drawer-head">
+          <div class="ch-drawer-tabs">
+            <button type="button" class="ch-dtab" data-dtab="vigil" onclick="openDrawer('vigil')">Vigil SOC</button>
+            <button type="button" class="ch-dtab" data-dtab="globe" onclick="openDrawer('globe')">God's Eye</button>
+            <button type="button" class="ch-dtab" data-dtab="audit" onclick="openDrawer('audit')">Posture</button>
+            <button type="button" class="ch-dtab" data-dtab="modules" onclick="openDrawer('modules')">Modules</button>
+            <button type="button" class="ch-dtab" data-dtab="chat" onclick="openDrawer('chat')">Chat</button>
+          </div>
+          <button type="button" class="ch-close-mini" onclick="closeDrawer()">×</button>
         </div>
-        <div id="modulesList" class="ch-list"><div class="ch-muted">No hot modules yet.</div></div>
-      </div>
-    </aside>
 
-    <main class="ch-stage">
-      <section id="view-mask" class="ch-view active">
-        <canvas id="maskStageCanvas"></canvas>
-        <div id="stageHud" class="ch-stage-hud">CHAPPA V2 · INITIALIZING…</div>
-        <div id="replyBox" class="ch-reply-box"></div>
-      </section>
+        <div class="ch-drawer-body">
+          <!-- Vigil AI SOC Pane -->
+          <section id="pane-vigil" class="ch-pane">
+            <div class="ch-k">NEW DEFENSIVE ALERT / TRIAGE</div>
+            <form class="ch-form" onsubmit="submitVigilTriage(event)">
+              <input id="vigilTitle" class="ch-input" placeholder="Alert title (e.g. Suspicious TLS cert / Failed SSH burst)">
+              <div class="ch-row">
+                <input id="vigilTarget" class="ch-input" placeholder="IOC / IP / Host">
+                <select id="vigilSev" class="ch-select">
+                  <option value="high">HIGH</option>
+                  <option value="critical">CRITICAL</option>
+                  <option value="medium" selected>MEDIUM</option>
+                  <option value="low">LOW</option>
+                </select>
+                <button type="submit" class="ch-btn on">Triage</button>
+              </div>
+            </form>
+            <div class="ch-k">LIVE VIGIL CASES</div>
+            <div id="vigilCasesList" class="ch-list"></div>
+          </section>
 
-      <section id="view-globe" class="ch-view">
-        <div class="ch-placeholder">
-          <div class="ch-k">GOD'S EYE VIEW · SLICE 3</div>
-          <h3>3D Geospatial Intelligence Globe</h3>
-          <p class="ch-muted">God's Eye View static Cesium/vector bundle plugs in here in Slice 3 — auto-plotting HackingTool v2 IPs, ASNs, and Vigil threat arcs.</p>
+          <!-- God's Eye View 3D Globe Pane -->
+          <section id="pane-globe" class="ch-pane">
+            <div class="ch-globe-wrap">
+              <canvas id="globeCanvas"></canvas>
+            </div>
+            <div class="ch-row" style="margin-top:8px">
+              <button type="button" class="ch-btn" onclick="flyGlobe(18.0179, -76.8099, 'KINGSTON HQ')">Kingston HQ</button>
+              <button type="button" class="ch-btn" onclick="flyGlobe(37.7749, -122.4194, 'US-WEST EDGE')">US-West</button>
+              <button type="button" class="ch-btn" onclick="flyGlobe(50.1109, 8.6821, 'FRANKFURT IX')">Frankfurt</button>
+              <a id="extGodseyeLink" class="ch-btn on" href="http://127.0.0.1:3001" target="_blank" rel="noopener" style="text-decoration:none;display:none">Full God's Eye ↗</a>
+            </div>
+            <div class="ch-k" style="margin-top:8px">GEOLOCATED TELEMETRY PINS</div>
+            <div id="globePinsList" class="ch-list"></div>
+          </section>
+
+          <!-- Defensive Posture & IOC Ingestion Pane -->
+          <section id="pane-audit" class="ch-pane">
+            <div class="ch-k">READ-ONLY DEFENSIVE POSTURE CHECK (DNS · TLS · HTTP HEADERS)</div>
+            <form class="ch-row" onsubmit="runDefensiveCheck(event)">
+              <input id="auditHostInput" class="ch-input" placeholder="example.com (authorized hostname)">
+              <button type="submit" class="ch-btn on">Inspect</button>
+            </form>
+            <pre id="auditResult" class="ch-pre">Run a read-only DNS, TLS certificate, and security-header check. Results auto-log to Vigil SOC &amp; God's Eye View.</pre>
+          </section>
+
+          <!-- Hot Modules & Assimilis Bridge Pane -->
+          <section id="pane-modules" class="ch-pane">
+            <div class="ch-k">ASSIMILIS ↔ CHAPPA COMMUNICATION LAYER</div>
+            <div id="bridgeStatusBox" class="ch-list"></div>
+            <div class="ch-k" style="margin-top:10px">HOT-UPGRADABLE MODULES (~/.chappa/modules)</div>
+            <form class="ch-row" onsubmit="installHotMod(event)">
+              <input id="modNameInput" class="ch-input" placeholder="playbook-or-module-id">
+              <button type="submit" class="ch-btn on">+ Hot Add</button>
+            </form>
+            <div class="ch-muted" style="margin:4px 0">Drop any custom <code>custom_mask.obj</code> into <code>~/.chappa/modules/</code> to override the 3D mask mesh without rebuilding the app.</div>
+            <div id="modulesList" class="ch-list"></div>
+          </section>
+
+          <!-- Full Hermes Chat Thread Pane -->
+          <section id="pane-chat" class="ch-pane">
+            <div class="ch-k">HERMES CONVERSATION LOG</div>
+            <div id="chatLogList" class="ch-chat-log"></div>
+          </section>
         </div>
-      </section>
-
-      <section id="view-soc" class="ch-view">
-        <div class="ch-placeholder">
-          <div class="ch-k">VIGIL AI SOC · SLICE 4</div>
-          <h3>Autonomous SOC Triage &amp; Playbooks</h3>
-          <p class="ch-muted">Vigil's in-process SQLite SOC engine connects here in Slice 4 — powered directly by Hermes (Antigravity + local models).</p>
-        </div>
-      </section>
+      </aside>
     </main>
 
-    <form class="ch-cmdbar" onsubmit="sendCommand(event)">
-      <input id="cmdInput" class="ch-input" placeholder="Command Chappa V2 (e.g. 'scan example.com', 'triage alert', 'contain host')…">
-      <button type="submit" class="ch-btn on">Execute</button>
+    <!-- Bottom Floating Hermes Chat Dock (Modified Hermes WebUI Bar) -->
+    <form class="ch-chat-dock" onsubmit="sendChat(event)">
+      <span class="ch-dock-ico">✦</span>
+      <input id="chatInput" class="ch-dock-input" autocomplete="off" placeholder="Talk to Chappa V2 (Hermes) — e.g. 'triage high alert on 10.0.0.5', 'check posture example.com', 'contain incident'…">
+      <button type="submit" class="ch-btn on">Send</button>
     </form>
   </div>
 
   <script src="static/chappa-mask.js"></script>
+  <script src="static/chappa-globe.js"></script>
   <script src="static/chappa.js"></script>
 </body>
 </html>
