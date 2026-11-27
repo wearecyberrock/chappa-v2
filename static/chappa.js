@@ -1,4 +1,4 @@
-/* Chappa V2 — Modified Hermes Core Controller (WebGL2 Mask + Vigil + God's Eye + SSE + Assimilis Bridge) */
+/* Chappa V2 — Modified Hermes Core Controller (WebGL2 Binary Particle Mask + Full Vigil AI SOC + Full God's Eye View + Real Hermes Engine) */
 (function () {
   'use strict';
 
@@ -7,8 +7,10 @@
   const hudCanvas = document.getElementById('maskHudCanvas');
   const stage = ChappaMask.createMaskStage(maskCanvas, { matrixCanvas, hudCanvas, theme: 'red-matrix', fps: 60, zoom: 1.05 });
 
-  let globe = null;
   let lastStatus = null;
+  let activeView = 'core'; // 'core' | 'vigil' | 'godseye'
+  let vigilLoaded = false;
+  let godseyeLoaded = false;
   let voiceEnabled = true;
   let audioCtx = null;
   let activeAudio = null;
@@ -34,7 +36,7 @@
     const btn = document.getElementById('voiceBtn');
     if (btn) {
       btn.classList.toggle('on', voiceEnabled);
-      btn.textContent = voiceEnabled ? 'Voice: Fish/Studio' : 'Voice: Muted';
+      btn.textContent = voiceEnabled ? 'Voice: Fish' : 'Voice: Muted';
     }
     if (!voiceEnabled) stopSpeaking();
   };
@@ -45,7 +47,6 @@
     if (!text) return;
     stopSpeaking();
 
-    // Try Assimilis Voice Studio / Fish Audio directly on same origin (/api/world/voice), then Chappa proxy
     let voiceData = null;
     const endpoints = [
       { url: '/api/world/voice', body: { op: 'speak', text, engine: 'auto', persona: 'jarvis', prefer_fish: true } },
@@ -115,7 +116,6 @@
       }
     }
 
-    // Graceful offline fallback: Web Speech API + syllabic eye glow modulation
     if (typeof window.speechSynthesis !== 'undefined' && typeof SpeechSynthesisUtterance !== 'undefined') {
       try {
         const u = new SpeechSynthesisUtterance(text);
@@ -128,7 +128,6 @@
     }
   }
 
-  // Allow Assimilis parent shell to drive live Voice Studio / Fish speech level directly
   window.addEventListener('message', (ev) => {
     const d = ev && ev.data;
     if (!d || typeof d !== 'object') return;
@@ -144,6 +143,91 @@
     .then((txt) => { if (txt && txt.includes('v ')) stage.loadObjMesh(txt); })
     .catch(() => {});
 
+  // Full-Bleed Workspace Switcher: 3D Core <-> Full Vigil AI SOC <-> Full God's Eye View (Cesium)
+  window.openAppView = function (view) {
+    activeView = view || 'core';
+    const ws = document.getElementById('appWorkspace');
+    const vf = document.getElementById('vigilFrame');
+    const gf = document.getElementById('godseyeFrame');
+    const title = document.getElementById('appBarTitle');
+    const badge = document.getElementById('appBarBadge');
+    const popout = document.getElementById('appPopoutLink');
+    const gevCtrl = document.getElementById('godseyeQuickControls');
+
+    const navCore = document.getElementById('navCoreBtn');
+    const navVigil = document.getElementById('navVigilBtn');
+    const navGodseye = document.getElementById('navGodseyeBtn');
+    if (navCore) navCore.classList.toggle('on', activeView === 'core');
+    if (navVigil) navVigil.classList.toggle('on', activeView === 'vigil');
+    if (navGodseye) navGodseye.classList.toggle('on', activeView === 'godseye');
+
+    if (activeView === 'core') {
+      if (ws) { ws.classList.remove('open'); ws.setAttribute('aria-hidden', 'true'); }
+      if (vf) vf.classList.remove('active');
+      if (gf) gf.classList.remove('active');
+      if (stage.setPaused) stage.setPaused(false);
+      const targetFps = (lastStatus && lastStatus.fps_cadence) ? Number(lastStatus.fps_cadence) : 60;
+      stage.setFps(targetFps);
+      return;
+    }
+
+    // Pause background mask WebGL rendering while full Cesium/Vigil workspace is active
+    if (stage.setPaused) stage.setPaused(true);
+    if (ws) { ws.classList.add('open'); ws.setAttribute('aria-hidden', 'false'); }
+
+    if (activeView === 'vigil') {
+      if (vf) {
+        if (!vigilLoaded) {
+          vf.src = 'vigil/cases';
+          vigilLoaded = true;
+        }
+        vf.classList.add('active');
+      }
+      if (gf) gf.classList.remove('active');
+      if (title) title.textContent = 'FULL VIGIL AI SOC CONSOLE';
+      if (popout) popout.href = 'vigil/cases';
+      if (gevCtrl) gevCtrl.style.display = 'none';
+      const vLive = lastStatus && lastStatus.services && lastStatus.services.vigil && lastStatus.services.vigil.live;
+      if (badge) {
+        badge.textContent = vLive ? 'POSTGRES · LIVE' : 'BOOTING…';
+        badge.classList.toggle('booting', !vLive);
+      }
+    } else if (activeView === 'godseye') {
+      if (gf) {
+        if (!godseyeLoaded) {
+          gf.src = 'godseye/?welcome=0';
+          godseyeLoaded = true;
+        }
+        gf.classList.add('active');
+      }
+      if (vf) vf.classList.remove('active');
+      if (title) title.textContent = "FULL GOD'S EYE VIEW · 3D CESIUM GLOBE";
+      if (popout) popout.href = 'godseye/?welcome=0';
+      if (gevCtrl) gevCtrl.style.display = 'flex';
+      const gLive = lastStatus && lastStatus.services && lastStatus.services.godseye && lastStatus.services.godseye.live;
+      if (badge) {
+        badge.textContent = gLive ? 'CESIUM 3D · LIVE' : 'BOOTING…';
+        badge.classList.toggle('booting', !gLive);
+      }
+    }
+  };
+
+  window.reloadActiveApp = function () {
+    const vf = document.getElementById('vigilFrame');
+    const gf = document.getElementById('godseyeFrame');
+    if (activeView === 'vigil' && vf) vf.src = 'vigil/cases?t=' + Date.now();
+    if (activeView === 'godseye' && gf) gf.src = 'godseye/?welcome=0&t=' + Date.now();
+  };
+
+  function sendGodseyeFlyTo(lat, lon, alt) {
+    const gf = document.getElementById('godseyeFrame');
+    if (gf && gf.contentWindow) {
+      try {
+        gf.contentWindow.postMessage({ type: 'chappa:flyTo', lat: Number(lat), lon: Number(lon), alt: Number(alt || 850000) }, '*');
+      } catch (_) {}
+    }
+  }
+
   window.openDrawer = function (paneName) {
     const dr = document.getElementById('workspaceDrawer');
     if (dr) dr.classList.add('open');
@@ -151,16 +235,6 @@
     const p = document.getElementById('pane-' + paneName);
     if (p) p.classList.add('active');
     document.querySelectorAll('.ch-dtab').forEach((b) => b.classList.toggle('on', b.dataset.dtab === paneName));
-    if (paneName === 'globe' && !globe) {
-      const gc = document.getElementById('globeCanvas');
-      if (gc && window.ChappaGlobe) {
-        globe = ChappaGlobe.createGlobe(gc);
-        if (lastStatus) {
-          globe.setPins(lastStatus.pins || []);
-          if (lastStatus.globe_focus) globe.flyTo(lastStatus.globe_focus.lat, lastStatus.globe_focus.lon, lastStatus.globe_focus.label);
-        }
-      }
-    }
   };
 
   window.closeDrawer = function () {
@@ -209,6 +283,15 @@
     });
   };
 
+  window.controlService = async function (service, action) {
+    showReply(`${action.toUpperCase()} requested for ${service}…`);
+    const r = await fetch('api/chappa/services/control', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ service, action })
+    });
+    if (r.ok) refreshStatus();
+  };
+
   window.sendChat = async function (e) {
     if (e) e.preventDefault();
     const inp = document.getElementById('chatInput');
@@ -216,7 +299,7 @@
     const message = inp ? inp.value.trim() : '';
     if (!message) return;
     if (inp) inp.value = '';
-    showReply('Hermes Core thinking…');
+    showReply('Hermes Engine reasoning…');
     const r = await fetch('api/chappa/chat', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message, model: sel ? sel.value : 'hermes-auto' })
@@ -244,13 +327,13 @@
       document.getElementById('vigilTitle').value = '';
       document.getElementById('vigilTarget').value = '';
       const d = await r.json();
-      if (d.case) showReply(`Vigil Triaged Case #${d.case.id}: ${d.case.verdict}`);
+      if (d.case) showReply(`Logged to ${d.vigil_backend || 'Vigil'} · Case ${d.case.id}: ${d.case.title}`);
       refreshStatus();
     }
   };
 
   window.setCaseStatus = async function (id, status) {
-    const r = await fetch(`api/chappa/vigil/cases/${id}/status`, {
+    const r = await fetch(`api/chappa/vigil/cases/${encodeURIComponent(id)}/status`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status })
     });
@@ -260,11 +343,11 @@
     }
   };
 
-  window.flyGlobe = async function (lat, lon, label) {
-    if (globe) globe.flyTo(lat, lon, label);
+  window.flyGlobe = async function (lat, lon, label, alt) {
+    sendGodseyeFlyTo(lat, lon, alt || 850000);
     await fetch('api/chappa/globe/focus', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lat, lon, label })
+      body: JSON.stringify({ lat, lon, label, alt: alt || 850000 })
     });
   };
 
@@ -305,7 +388,13 @@
     lastStatus = d;
     const st = d.mask_state || 'IDLE';
     stage.setState(st);
-    stage.setFps(d.fps_cadence || 60);
+    if (activeView === 'core') stage.setFps(d.fps_cadence || 60);
+
+    const svcs = d.services || {};
+    const vSvc = svcs.vigil || {};
+    const gSvc = svcs.godseye || {};
+    const pgSvc = svcs.postgres || {};
+    const rdSvc = svcs.redis || {};
 
     const isAlert = st === 'ALERT' || (d.open_alerts || 0) > 0;
     const dot = document.getElementById('brandDot');
@@ -319,67 +408,120 @@
     if (fpsBtn) {
       const f = Number(d.fps_cadence || 60);
       fpsBtn.dataset.fps = String(f);
-      fpsBtn.textContent = f <= 12 ? '12fps (On Twos)' : '60fps';
+      fpsBtn.textContent = f <= 12 ? '12fps' : '60fps';
     }
     document.querySelectorAll('.ch-sdot').forEach((b) => b.classList.toggle('active', b.dataset.st === st));
 
-    const kC = document.getElementById('kpiCases'); if (kC) kC.textContent = `${d.open_alerts || 0} open / ${d.cases_count || 0} total`;
-    const kP = document.getElementById('kpiPins'); if (kP) kP.textContent = String(d.pins_count || 0);
-    const kL = document.getElementById('kpiLink'); if (kL) kL.textContent = (d.bridges && d.bridges.assimilis && d.bridges.assimilis.connected) ? 'CONNECTED' : 'STANDALONE';
+    const kV = document.getElementById('kpiVigil');
+    if (kV) {
+      kV.textContent = vSvc.live ? `LIVE · ${d.open_alerts || 0} cases · ${d.workflows_count || 0} playbooks` : (vSvc.booting ? 'BOOTING…' : 'OFFLINE');
+      kV.classList.toggle('live', !!vSvc.live);
+    }
+    const kG = document.getElementById('kpiGodseye');
+    if (kG) {
+      kG.textContent = gSvc.live ? `LIVE · 3D CESIUM (${d.pins_count || 0} pins)` : (gSvc.booting ? 'BOOTING…' : 'OFFLINE');
+      kG.classList.toggle('live', !!gSvc.live);
+    }
+    const kL = document.getElementById('kpiLink');
+    if (kL) {
+      const linked = d.bridges && d.bridges.assimilis && d.bridges.assimilis.connected;
+      kL.textContent = linked ? 'ASSIMILIS · CONNECTED' : 'STANDALONE HERMES';
+      kL.classList.toggle('live', !!linked);
+    }
 
-    const nv = document.getElementById('nodeVigilSub'); if (nv) nv.textContent = `${d.open_alerts || 0} open cases`;
-    const ng = document.getElementById('nodeGlobeSub'); if (ng) ng.textContent = `${d.pins_count || 0} live pins`;
-    const nm = document.getElementById('nodeModSub'); if (nm) nm.textContent = `${(d.hot_modules || []).length} hot modules`;
+    const nv = document.getElementById('nodeVigilSub');
+    if (nv) nv.textContent = vSvc.live ? `LIVE · ${d.open_alerts || 0} open · ${d.findings_count || 0} findings` : (vSvc.booting ? 'Booting FastAPI + Postgres…' : 'Offline — click to start');
+    const ng = document.getElementById('nodeGlobeSub');
+    if (ng) ng.textContent = gSvc.live ? `LIVE · 3D Cesium · ${d.pins_count || 0} pins` : (gSvc.booting ? 'Booting Cesium Globe…' : 'Offline — click to start');
+    const nm = document.getElementById('nodeModSub');
+    if (nm) nm.textContent = `${vSvc.live ? 'Vigil✓' : 'Vigil…'} · ${gSvc.live ? 'Globe✓' : 'Globe…'} · ${(d.hot_modules || []).length} mods`;
 
-    // Vigil cases list
+    // Update active app bar badge
+    const badge = document.getElementById('appBarBadge');
+    if (badge && activeView === 'vigil') {
+      badge.textContent = vSvc.live ? `POSTGRES · LIVE (${d.cases_count || 0} cases)` : 'BOOTING…';
+      badge.classList.toggle('booting', !vSvc.live);
+    } else if (badge && activeView === 'godseye') {
+      badge.textContent = gSvc.live ? 'CESIUM 3D · LIVE' : 'BOOTING…';
+      badge.classList.toggle('booting', !gSvc.live);
+    }
+
+    // Vigil cases list in quick triage drawer
     const vc = document.getElementById('vigilCasesList');
     if (vc) {
       const cases = d.cases || [];
       vc.innerHTML = cases.length
-        ? cases.map((c) => `
-          <div class="ch-item ${esc(c.severity)}">
-            <div class="ch-item-head">
-              <b>#${c.id} [${esc(c.severity).toUpperCase()}] ${esc(c.title)}</b>
-              <span>${esc(c.status).toUpperCase()}</span>
-            </div>
-            <div class="ch-muted"><b>MITRE:</b> ${esc(c.mitre)} · <b>IOC:</b> ${esc(c.target || 'n/a')}</div>
-            <div class="ch-muted">${esc(c.verdict)}</div>
-            <div class="ch-row" style="margin-top:3px">
-              ${c.lat != null ? `<button type="button" class="ch-btn" onclick="openDrawer('globe');flyGlobe(${c.lat},${c.lon},'${esc(c.title).replace(/'/g, '')}')">Plot on Globe</button>` : ''}
-              ${c.status !== 'contained' ? `<button type="button" class="ch-btn on" onclick="setCaseStatus(${c.id},'contained')">Contain</button>` : ''}
-              ${c.status !== 'closed' ? `<button type="button" class="ch-btn" onclick="setCaseStatus(${c.id},'closed')">Close</button>` : ''}
-            </div>
-          </div>`).join('')
-        : '<div class="ch-muted">No open Vigil SOC cases. Triage an alert above or via Hermes chat.</div>';
+        ? cases.map((c) => {
+            const cid = esc(c.case_id || c.id);
+            const rawCid = String(c.case_id || c.id).replace(/'/g, '');
+            return `
+              <div class="ch-item ${esc(c.severity)}">
+                <div class="ch-item-head">
+                  <b>${cid} [${esc(c.severity).toUpperCase()}] ${esc(c.title)}</b>
+                  <span>${esc(c.status).toUpperCase()}</span>
+                </div>
+                <div class="ch-muted"><b>MITRE:</b> ${esc(c.mitre)} · <b>SRC:</b> ${esc(c.source || 'vigil')}</div>
+                <div class="ch-muted">${esc((c.verdict || '').slice(0, 180))}</div>
+                <div class="ch-row" style="margin-top:3px">
+                  ${c.status !== 'contained' ? `<button type="button" class="ch-btn on" onclick="setCaseStatus('${rawCid}','contained')">Contain</button>` : ''}
+                  ${c.status !== 'closed' ? `<button type="button" class="ch-btn" onclick="setCaseStatus('${rawCid}','closed')">Close</button>` : ''}
+                </div>
+              </div>`;
+          }).join('')
+        : '<div class="ch-muted">No open Vigil SOC cases yet. Create one above, run a Posture Check, or open Full Vigil Console.</div>';
     }
 
-    // Globe pins list + live 3D globe sync
-    if (globe) {
-      globe.setPins(d.pins || []);
-      if (d.globe_focus) globe.flyTo(d.globe_focus.lat, d.globe_focus.lon, d.globe_focus.label);
+    // Vigil workflows list
+    const wfEl = document.getElementById('vigilWorkflowsList');
+    if (wfEl) {
+      const wfs = d.workflows || [];
+      wfEl.innerHTML = wfs.length
+        ? wfs.map((w) => `<div class="ch-item"><b>${esc(w.name || w.id)}</b><div class="ch-muted">${esc(w.description || 'Vigil WORKFLOW.md playbook')}</div></div>`).join('')
+        : '<div class="ch-muted">Waiting for Full Vigil playbooks…</div>';
     }
-    const extG = document.getElementById('extGodseyeLink');
-    if (extG && d.bridges && d.bridges.godseye) {
-      extG.style.display = d.bridges.godseye.external_live ? 'inline-block' : 'none';
-      extG.href = d.bridges.godseye.url;
-    }
+
+    // Geolocated pins list -> click flies Full God's Eye View
     const gp = document.getElementById('globePinsList');
     if (gp) {
       gp.innerHTML = (d.pins || []).map((p) => `
-        <div class="ch-item ${esc(p.severity)}" style="cursor:pointer" onclick="flyGlobe(${p.lat},${p.lon},'${esc(p.label).replace(/'/g, '')}')">
+        <div class="ch-item ${esc(p.severity)}" style="cursor:pointer" onclick="closeDrawer();openAppView('godseye');flyGlobe(${p.lat},${p.lon},'${esc(p.label).replace(/'/g, '')}',750000)">
           <div class="ch-item-head"><b>${esc(p.label)}</b><span>${Number(p.lat).toFixed(2)}, ${Number(p.lon).toFixed(2)}</span></div>
           <div class="ch-muted">${esc(p.ip || '')} · ${esc(p.asn || '')} — ${esc(p.notes || '')}</div>
         </div>`).join('');
     }
 
-    // Bridge & Hot Modules pane
+    // Runtime & Bridge panel
     const br = document.getElementById('bridgeStatusBox');
-    if (br && d.bridges) {
+    if (br) {
       br.innerHTML = `
-        <div class="ch-item"><b>Assimilis Manager:</b> ${d.bridges.assimilis.connected ? 'Connected (' + esc(d.bridges.assimilis.url) + ')' : 'Standalone Mode'}</div>
-        <div class="ch-item"><b>Vigil AI SOC:</b> ${esc(d.bridges.vigil.mode)}</div>
-        <div class="ch-item"><b>God's Eye View:</b> ${d.bridges.godseye.external_live ? 'Full Server Live' : 'Built-In 3D Globe Active'}</div>`;
+        <div class="ch-item">
+          <div class="ch-item-head"><b>Full Vigil AI SOC (FastAPI + React)</b><span>${vSvc.live ? 'LIVE' : (vSvc.booting ? 'BOOTING' : 'OFFLINE')}</span></div>
+          <div class="ch-muted">${esc(vSvc.error || vSvc.url || '127.0.0.1:16987')} · ${d.cases_count || 0} cases · ${d.findings_count || 0} findings · ${d.workflows_count || 0} playbooks</div>
+          <div class="ch-row">
+            <button type="button" class="ch-btn on" onclick="closeDrawer();openAppView('vigil')">Open UI</button>
+            <button type="button" class="ch-btn" onclick="controlService('vigil','restart')">Restart</button>
+            <button type="button" class="ch-btn danger" onclick="controlService('vigil','stop')">Stop</button>
+          </div>
+        </div>
+        <div class="ch-item">
+          <div class="ch-item-head"><b>Full God's Eye View (3D Cesium + MCP)</b><span>${gSvc.live ? 'LIVE' : (gSvc.booting ? 'BOOTING' : 'OFFLINE')}</span></div>
+          <div class="ch-muted">${esc(gSvc.error || gSvc.url || '127.0.0.1:14173')}</div>
+          <div class="ch-row">
+            <button type="button" class="ch-btn on" onclick="closeDrawer();openAppView('godseye')">Open 3D Globe</button>
+            <button type="button" class="ch-btn" onclick="controlService('godseye','restart')">Restart</button>
+            <button type="button" class="ch-btn danger" onclick="controlService('godseye','stop')">Stop</button>
+          </div>
+        </div>
+        <div class="ch-item">
+          <div class="ch-item-head"><b>Local Stores (Zero-Root)</b><span>PG:${pgSvc.live ? 'ON' : 'OFF'} · REDIS:${rdSvc.live ? 'ON' : 'OFF'}</span></div>
+          <div class="ch-muted">PostgreSQL ${esc(pgSvc.host || '127.0.0.1')}:${esc(pgSvc.port || 15432)} · Redis ${esc(rdSvc.host || '127.0.0.1')}:${esc(rdSvc.port || 16379)}</div>
+        </div>
+        <div class="ch-item">
+          <div class="ch-item-head"><b>Hermes Engine &amp; Assimilis Bridge</b><span>${(d.bridges && d.bridges.assimilis && d.bridges.assimilis.connected) ? 'CONNECTED' : 'STANDALONE'}</span></div>
+          <div class="ch-muted">${esc((d.bridges && d.bridges.hermes && d.bridges.hermes.mode) || 'hermes-engine')} ${d.bridges && d.bridges.assimilis && d.bridges.assimilis.url ? '· ' + esc(d.bridges.assimilis.url) : ''}</div>
+        </div>`;
     }
+
     const ml = document.getElementById('modulesList');
     if (ml) {
       const mods = d.hot_modules || [];
@@ -388,13 +530,12 @@
         : '<div class="ch-muted">No hot modules installed yet.</div>';
     }
 
-    // Chat log pane
     const cl = document.getElementById('chatLogList');
     if (cl) {
       const msgs = d.chat_history || [];
       cl.innerHTML = msgs.length
-        ? msgs.map((m) => `<div class="ch-msg ${esc(m.role)}"><b>${m.role === 'user' ? 'YOU' : 'CHAPPA V2'}:</b>\n${esc(m.content)}</div>`).join('')
-        : '<div class="ch-muted">Use the Hermes chat bar at the bottom to command Chappa V2.</div>';
+        ? msgs.map((m) => `<div class="ch-msg ${esc(m.role)}"><b>${m.role === 'user' ? 'YOU' : 'CHAPPA V2 · HERMES'}:</b>\n${esc(m.content)}</div>`).join('')
+        : '<div class="ch-muted">Use the Hermes Engine command dock at the bottom to talk to Chappa V2.</div>';
     }
   }
 
@@ -425,13 +566,17 @@
     } catch (_) {}
   }
 
-  // Live SSE stream (zero polling lag!)
   if (typeof EventSource !== 'undefined') {
     const es = new EventSource('api/chappa/events');
     es.addEventListener('status', (ev) => { try { applyStatus(JSON.parse(ev.data)); } catch (_) {} });
     es.addEventListener('vigil_case', () => refreshStatus());
     es.addEventListener('globe_focus', (ev) => {
-      try { const f = JSON.parse(ev.data); if (globe) globe.flyTo(f.lat, f.lon, f.label); } catch (_) {}
+      try {
+        const f = JSON.parse(ev.data);
+        if (f && typeof f.lat === 'number' && typeof f.lon === 'number') {
+          sendGodseyeFlyTo(f.lat, f.lon, f.alt || 850000);
+        }
+      } catch (_) {}
     });
     es.addEventListener('chat_reply', () => refreshStatus());
   }

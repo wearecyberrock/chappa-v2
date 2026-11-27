@@ -1,10 +1,11 @@
-"""Chappa V2 — Standalone Local-First Cybersecurity Core Agent (Hermes + Vigil AI SOC + God's Eye View).
+"""Chappa V2 — Standalone Local-First Cybersecurity Core Agent.
 
-Runs standalone on 127.0.0.1:7480 or proxied behind Assimilis at /chappa-v2/*.
-Zero Docker / zero external Python dependencies: local SQLite store, live SSE
-event bus, Vigil AI SOC triage & external Vigil bridge, God's Eye View 3D globe
-feed & bridge, read-only defensive posture telemetry, Hermes/Assimilis model &
-chat bridge, and hot-upgradable ~/.chappa/modules/ artifacts.
+Unifies:
+  - Modified Hermes WebUI Core + Red Matrix floating 3D 1/0 Hacker Mask + Fish/Voice Studio glowing eyes
+  - Real Full Vigil AI SOC (apps/vigil: FastAPI + PostgreSQL + React SOC + Workflows + /mcp) at /vigil/
+  - Real Full God's Eye View (apps/gods-eye-view: 3D Cesium Globe + Live Providers + /mcp) at /godseye/
+  - Real Hermes Engine (Assimilis unified model router / standalone ~/.hermes/.env + live tool calling)
+  - Read-only defensive posture telemetry (DNS, TLS cert, HTTP security headers) + hot modules
 """
 from __future__ import annotations
 
@@ -24,10 +25,13 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+import hermes_bridge
+import reverse_proxy
+import vigil_client
+from runtime_manager import GODSEYE_URL, MANAGER, STATE_DIR, VIGIL_URL
+
 ROOT = Path(__file__).resolve().parent
 STATIC_DIR = ROOT / "static"
-
-STATE_DIR = Path(os.environ.get("CHAPPA_STATE_DIR") or (Path.home() / ".chappa")).expanduser()
 MODULES_DIR = STATE_DIR / "modules"
 DB_PATH = STATE_DIR / "chappa.db"
 
@@ -75,6 +79,7 @@ def init_db() -> None:
                 );
                 CREATE TABLE IF NOT EXISTS vigil_cases (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    vigil_case_id TEXT NOT NULL DEFAULT '',
                     title TEXT NOT NULL,
                     target TEXT NOT NULL DEFAULT '',
                     severity TEXT NOT NULL DEFAULT 'medium',
@@ -117,17 +122,21 @@ def init_db() -> None:
                 );
                 """
             )
+            # Migrate existing DBs that lack vigil_case_id
+            cols = {r[1] for r in conn.execute("PRAGMA table_info(vigil_cases)").fetchall()}
+            if "vigil_case_id" not in cols:
+                conn.execute("ALTER TABLE vigil_cases ADD COLUMN vigil_case_id TEXT NOT NULL DEFAULT ''")
+
             defaults = {
                 "mask_state": "IDLE",
                 "active_target": "",
                 "fps_cadence": "60",
                 "active_model": os.environ.get("CHAPPA_DEFAULT_MODEL", "hermes-auto"),
-                "globe_focus": json.dumps({"lat": 18.0179, "lon": -76.8099, "label": "KINGSTON HQ"}),
+                "globe_focus": json.dumps({"lat": 18.0179, "lon": -76.8099, "alt": 850000, "label": "KINGSTON HQ"}),
             }
             for k, v in defaults.items():
                 conn.execute("INSERT OR IGNORE INTO runtime_state(k, v) VALUES (?, ?)", (k, v))
 
-            # Seed initial telemetry reference pin so God's Eye Globe is immediately alive
             pin_cnt = conn.execute("SELECT COUNT(*) FROM globe_pins").fetchone()[0]
             if pin_cnt == 0:
                 now = time.time()
@@ -155,17 +164,6 @@ def _set_kv(conn: sqlite3.Connection, key: str, val: str) -> None:
         "INSERT INTO runtime_state(k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v",
         (key, str(val)),
     )
-
-
-def _probe_http(url: str, timeout: float = 0.6) -> bool:
-    if not url:
-        return False
-    try:
-        req = urllib.request.Request(url, method="GET")
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            return 200 <= r.status < 500
-    except Exception:
-        return False
 
 
 def list_hot_modules() -> list[dict[str, Any]]:
@@ -216,51 +214,6 @@ def install_hot_module(payload: dict[str, Any]) -> dict[str, Any]:
     return rec
 
 
-def fetch_assimilis_models() -> list[dict[str, Any]]:
-    base = [{"id": "hermes-auto", "label": "Hermes Auto (Antigravity + Local)", "provider": "hermes", "type": "text"}]
-    assimilis_url = os.environ.get("ASSIMILIS_URL", "").strip().rstrip("/")
-    if assimilis_url:
-        try:
-            with urllib.request.urlopen(f"{assimilis_url}/api/models/all", timeout=2.5) as r:
-                data = json.loads(r.read().decode("utf-8"))
-                models = data.get("models") if isinstance(data, dict) else None
-                if isinstance(models, list) and models:
-                    text_models = [
-                        m for m in models
-                        if isinstance(m, dict) and str(m.get("type") or m.get("category") or "text").lower() in ("text", "code", "chat", "reasoning", "")
-                    ]
-                    return base + (text_models or models)[:50]
-        except Exception:
-            pass
-    return base + [
-        {"id": "@antigravity:gemini-2.5-pro", "label": "Antigravity · Gemini 2.5 Pro", "provider": "antigravity", "type": "text"},
-        {"id": "ollama:qwen2.5:14b", "label": "Local Ollama · Qwen 2.5 14B", "provider": "ollama", "type": "text"},
-    ]
-
-
-def hermes_complete(prompt: str, *, model: str = "") -> str:
-    assimilis_url = os.environ.get("ASSIMILIS_URL", "").strip().rstrip("/")
-    if assimilis_url:
-        try:
-            body: dict[str, Any] = {"prompt": prompt}
-            if model and model != "hermes-auto":
-                body["model"] = model
-            req = urllib.request.Request(
-                f"{assimilis_url}/api/world/models/complete",
-                data=json.dumps(body).encode("utf-8"),
-                headers={"Content-Type": "application/json"},
-                method="POST",
-            )
-            with urllib.request.urlopen(req, timeout=14) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-                txt = str(data.get("text") or data.get("reply") or data.get("content") or "").strip()
-                if txt:
-                    return txt
-        except Exception:
-            pass
-    return ""
-
-
 def get_status() -> dict[str, Any]:
     init_db()
     with _DB_LOCK:
@@ -271,8 +224,8 @@ def get_status() -> dict[str, Any]:
             fps_cadence = int(_get_kv(conn, "fps_cadence", "60") or "60")
             active_model = _get_kv(conn, "active_model", "hermes-auto")
             focus_raw = _get_kv(conn, "globe_focus", "{}")
-            cases = [dict(r) for r in conn.execute("SELECT * FROM vigil_cases ORDER BY id DESC LIMIT 20").fetchall()]
-            open_alerts = conn.execute("SELECT COUNT(*) FROM vigil_cases WHERE status IN ('open', 'investigating')").fetchone()[0]
+            local_cases = [dict(r) for r in conn.execute("SELECT * FROM vigil_cases ORDER BY id DESC LIMIT 20").fetchall()]
+            local_open = conn.execute("SELECT COUNT(*) FROM vigil_cases WHERE status IN ('open', 'investigating')").fetchone()[0]
             pins = [dict(r) for r in conn.execute("SELECT * FROM globe_pins ORDER BY id DESC LIMIT 30").fetchall()]
             chats = [dict(r) for r in conn.execute("SELECT * FROM chat_messages ORDER BY id DESC LIMIT 30").fetchall()]
             chats.reverse()
@@ -282,24 +235,56 @@ def get_status() -> dict[str, Any]:
     try:
         globe_focus = json.loads(focus_raw)
     except Exception:
-        globe_focus = {"lat": 18.0179, "lon": -76.8099, "label": "KINGSTON HQ"}
+        globe_focus = {"lat": 18.0179, "lon": -76.8099, "alt": 850000, "label": "KINGSTON HQ"}
+
+    services = MANAGER.status()
+    vigil_live = bool((services.get("vigil") or {}).get("live"))
+    godseye_live = bool((services.get("godseye") or {}).get("live"))
+
+    cases: list[dict[str, Any]] = local_cases
+    findings_count = 0
+    workflows: list[dict[str, Any]] = []
+    open_alerts = int(local_open)
+    vigil_total_cases = len(local_cases)
+
+    if vigil_live:
+        vc = vigil_client.list_cases(limit=25)
+        vf = vigil_client.list_findings(limit=25)
+        vw = vigil_client.list_workflows()
+        if vc.get("ok"):
+            cases = [vigil_client.normalize_case_for_hud(c) for c in (vc.get("cases") or [])]
+            vigil_total_cases = int(vc.get("total", len(cases)))
+            open_alerts = sum(1 for c in cases if str(c.get("status", "")).lower() not in ("closed", "resolved", "dismissed"))
+        if vf.get("ok"):
+            findings_count = int(vf.get("total", len(vf.get("findings") or [])))
+        if vw.get("ok"):
+            workflows = [
+                {
+                    "id": w.get("id") or w.get("name"),
+                    "name": w.get("name") or w.get("id"),
+                    "description": str(w.get("description") or "")[:180],
+                }
+                for w in (vw.get("workflows") or [])[:20]
+            ]
 
     assimilis_url = os.environ.get("ASSIMILIS_URL", "").strip()
-    vigil_url = os.environ.get("VIGIL_URL", "http://127.0.0.1:8000").strip()
-    godseye_url = os.environ.get("GODSEYE_URL", "http://127.0.0.1:3001").strip()
+    hermes_st = hermes_bridge.engine_status()
     custom_obj = (MODULES_DIR / "custom_mask.obj").is_file()
 
     return {
         "ok": True,
         "agent": "chappa-v2",
         "name": "Chappa V2",
-        "version": "2.1.0",
+        "version": "2.2.0",
         "mask_state": mask_state,
         "active_target": active_target,
         "fps_cadence": fps_cadence,
         "active_model": active_model,
         "open_alerts": open_alerts,
-        "cases_count": len(cases),
+        "cases_count": vigil_total_cases,
+        "findings_count": findings_count,
+        "workflows_count": len(workflows),
+        "workflows": workflows,
         "pins_count": len(pins),
         "cases": cases,
         "pins": pins,
@@ -308,15 +293,45 @@ def get_status() -> dict[str, Any]:
         "hot_modules": list_hot_modules(),
         "modules_dir": str(MODULES_DIR),
         "custom_mask_loaded": custom_obj,
+        "services": services,
         "bridges": {
             "assimilis": {"connected": bool(assimilis_url), "url": assimilis_url},
-            "vigil": {"mode": "external+local" if _probe_http(vigil_url + "/health", 0.2) else "in-process-sqlite", "url": vigil_url},
-            "godseye": {"external_live": _probe_http(godseye_url, 0.2), "url": godseye_url},
+            "hermes": hermes_st,
+            "vigil": {
+                "live": vigil_live,
+                "mode": "full-vigil-soc" if vigil_live else ("booting" if services["vigil"]["booting"] else "offline-cache"),
+                "url": VIGIL_URL,
+                "mount": "vigil/",
+            },
+            "godseye": {
+                "live": godseye_live,
+                "external_live": godseye_live,
+                "mode": "full-cesium-globe" if godseye_live else ("booting" if services["godseye"]["booting"] else "offline"),
+                "url": GODSEYE_URL,
+                "mount": "godseye/?embed=1",
+            },
         },
     }
 
 
+def _set_mask_state_internal(state: str, active_target: str | None = None) -> str:
+    ms = state.upper() if state else "IDLE"
+    if ms not in VALID_STATES:
+        ms = "IDLE"
+    with _DB_LOCK:
+        conn = _db()
+        try:
+            _set_kv(conn, "mask_state", ms)
+            if active_target is not None:
+                _set_kv(conn, "active_target", active_target[:200])
+            conn.commit()
+        finally:
+            conn.close()
+    return ms
+
+
 def vigil_create_or_triage(payload: dict[str, Any], *, run_triage: bool = True) -> dict[str, Any]:
+    """Create a real finding & case in Full Vigil AI SOC (with SQLite fallback if Vigil is offline)."""
     title = str(payload.get("title") or payload.get("alert") or payload.get("summary") or "").strip()
     target = str(payload.get("target") or payload.get("ioc") or "").strip()
     severity = str(payload.get("severity") or "medium").lower()
@@ -329,45 +344,91 @@ def vigil_create_or_triage(payload: dict[str, Any], *, run_triage: bool = True) 
     low = f"{title} {target}".lower()
     if not mitre:
         if any(k in low for k in ("tls", "ssl", "cert", "header", "hsts", "csp")):
-            mitre = "T1557 / Defensive Hardening"
+            mitre = "T1557"
         elif any(k in low for k in ("dns", "domain", "phish", "c2", "beacon")):
-            mitre = "T1071 · Application Layer Protocol"
+            mitre = "T1071"
         elif any(k in low for k in ("login", "brute", "auth", "cred", "ssh")):
-            mitre = "T1110 · Brute Force"
+            mitre = "T1110"
         else:
-            mitre = "T1595 · Active / Telemetry Review"
+            mitre = "T1595"
 
-    verdict = str(payload.get("verdict") or "")
-    remediation = str(payload.get("remediation") or "")
+    verdict = str(payload.get("verdict") or payload.get("description") or "").strip()
+    remediation = str(payload.get("remediation") or "").strip()
     if run_triage and not verdict:
-        ai_txt = hermes_complete(
-            "You are Vigil AI SOC inside Chappa V2 (defensive security operations). "
-            f"Triage this alert concisely in 2 short sentences (Verdict + Remediation).\n"
-            f"Title: {title}\nTarget/IOC: {target or 'n/a'}\nSeverity: {severity}\nMITRE: {mitre}"
+        ok_llm, ai_txt, _prov = hermes_bridge.complete(
+            [{"role": "user", "content": (
+                f"Triage this defensive security alert concisely in 2 short sentences (Verdict + Remediation).\n"
+                f"Title: {title}\nTarget/IOC: {target or 'n/a'}\nSeverity: {severity}\nMITRE: {mitre}"
+            )}],
+            system_prompt="You are Vigil AI SOC inside Chappa V2 (defensive security operations). Be sharp and concise.",
         )
-        verdict = ai_txt or (
+        verdict = ai_txt if ok_llm and ai_txt else (
             f"Classified as {severity.upper()} defensive telemetry ({mitre}). "
-            f"Correlated IOC '{target or 'local'}' logged to Chappa SQLite SOC queue."
+            f"Correlated IOC '{target or 'local'}' ingested into Full Vigil AI SOC."
         )
     if not remediation:
-        remediation = "1) Verify asset ownership & logs  2) Enforce TLS/CSP/firewall rules  3) Mark Contained once verified."
+        remediation = "1) Verify asset ownership & logs  2) Enforce TLS/CSP/firewall rules  3) Close case in Vigil once contained."
 
     lat = payload.get("lat")
     lon = payload.get("lon")
     now = time.time()
     next_mask = "ALERT" if severity in ("critical", "high") else "RECON"
 
+    # Primary path: write directly into REAL Full Vigil AI SOC (PostgreSQL + FastAPI)
+    vigil_finding_id = ""
+    vigil_case_obj: dict[str, Any] | None = None
+    vigil_case_id = ""
+    vigil_live = bool(MANAGER.status()["vigil"]["live"])
+    if vigil_live:
+        ing = vigil_client.ingest_finding(
+            title=title,
+            target=target,
+            severity=severity,
+            mitre=mitre,
+            description=f"{verdict}\n\nRemediation: {remediation}",
+            source=str(payload.get("source") or "chappa-v2"),
+            lat=float(lat) if lat is not None else None,
+            lon=float(lon) if lon is not None else None,
+            raw_data={"title": title, "target": target, "severity": severity, "mitre": mitre, "verdict": verdict},
+        )
+        if ing.get("ok"):
+            vigil_finding_id = str(ing.get("finding_id") or "")
+        prio = severity if severity in ("critical", "high", "medium", "low") else "low"
+        created = vigil_client.create_case(
+            title=title,
+            description=f"Target/IOC: {target or 'n/a'}\nMITRE: {mitre}\n\n{verdict}\n\nRemediation: {remediation}",
+            finding_ids=[vigil_finding_id] if vigil_finding_id else [],
+            priority=prio,
+            status="open",
+        )
+        if created.get("ok") and isinstance(created.get("case"), dict):
+            vigil_case_obj = created["case"]
+            vigil_case_id = str(vigil_case_obj.get("case_id") or "")
+
     with _DB_LOCK:
         conn = _db()
         try:
             cur = conn.execute(
                 """
-                INSERT INTO vigil_cases(title, target, severity, status, mitre, verdict, remediation, source, lat, lon, created_at, updated_at)
-                VALUES (?, ?, ?, 'open', ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO vigil_cases(vigil_case_id, title, target, severity, status, mitre, verdict, remediation, source, lat, lon, created_at, updated_at)
+                VALUES (?, ?, ?, ?, 'open', ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (title[:160], target[:180], severity, mitre[:80], verdict[:600], remediation[:400], str(payload.get("source") or "vigil"), lat, lon, now, now),
+                (
+                    vigil_case_id,
+                    title[:160],
+                    target[:180],
+                    severity,
+                    mitre[:80],
+                    verdict[:600],
+                    remediation[:400],
+                    "vigil-full" if vigil_case_id else str(payload.get("source") or "vigil"),
+                    lat,
+                    lon,
+                    now,
+                    now,
+                ),
             )
-            case_id = cur.lastrowid
+            local_id = cur.lastrowid
             _set_kv(conn, "mask_state", next_mask)
             if target:
                 _set_kv(conn, "active_target", target[:180])
@@ -376,38 +437,73 @@ def vigil_create_or_triage(payload: dict[str, Any], *, run_triage: bool = True) 
                     "INSERT INTO globe_pins(label, ip, asn, severity, lat, lon, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                     (title[:48], target[:64], str(payload.get("asn") or "SOC-PIN"), severity, float(lat), float(lon), verdict[:180], now),
                 )
-                _set_kv(conn, "globe_focus", json.dumps({"lat": float(lat), "lon": float(lon), "label": title[:40]}))
+                focus_obj = {"lat": float(lat), "lon": float(lon), "alt": 850000, "label": title[:40]}
+                _set_kv(conn, "globe_focus", json.dumps(focus_obj))
             conn.commit()
-            case_row = dict(conn.execute("SELECT * FROM vigil_cases WHERE id = ?", (case_id,)).fetchone())
+            local_row = dict(conn.execute("SELECT * FROM vigil_cases WHERE id = ?", (local_id,)).fetchone())
         finally:
             conn.close()
 
-    _broadcast("vigil_case", case_row)
-    return {"ok": True, "case": case_row, "mask_state": next_mask}
+    out_case = vigil_client.normalize_case_for_hud(vigil_case_obj) if vigil_case_obj else local_row
+    out_case["finding_id"] = vigil_finding_id
+    out_case["lat"] = lat
+    out_case["lon"] = lon
+    _broadcast("vigil_case", out_case)
+    if lat is not None and lon is not None:
+        _broadcast("globe_focus", {"lat": float(lat), "lon": float(lon), "alt": 850000, "label": title[:40]})
+    return {
+        "ok": True,
+        "case": out_case,
+        "vigil_backend": "full-vigil-soc" if vigil_case_id else "local-cache",
+        "finding_id": vigil_finding_id,
+        "mask_state": next_mask,
+    }
 
 
-def update_case_status(case_id: int, next_status: str) -> dict[str, Any]:
-    if next_status not in ("open", "investigating", "contained", "closed"):
+def update_case_status(case_id: str, next_status: str, notes: str | None = None) -> dict[str, Any]:
+    if next_status not in ("open", "investigating", "in_progress", "contained", "closed", "resolved"):
         return {"ok": False, "error": "Invalid status"}
+
+    vigil_updated = False
+    if MANAGER.status()["vigil"]["live"]:
+        res = vigil_client.update_case_status(str(case_id), next_status, notes=notes)
+        vigil_updated = bool(res.get("ok"))
+
     now = time.time()
     with _DB_LOCK:
         conn = _db()
         try:
-            conn.execute("UPDATE vigil_cases SET status = ?, updated_at = ? WHERE id = ?", (next_status, now, case_id))
-            open_high = conn.execute(
-                "SELECT COUNT(*) FROM vigil_cases WHERE status IN ('open','investigating') AND severity IN ('critical','high')"
-            ).fetchone()[0]
-            if next_status in ("contained", "closed") and open_high == 0:
+            if str(case_id).isdigit():
+                conn.execute("UPDATE vigil_cases SET status = ?, updated_at = ? WHERE id = ?", (next_status, now, int(case_id)))
+            else:
+                conn.execute("UPDATE vigil_cases SET status = ?, updated_at = ? WHERE vigil_case_id = ?", (next_status, now, str(case_id)))
+            if next_status in ("contained", "closed", "resolved"):
                 _set_kv(conn, "mask_state", "CONTAINED")
             conn.commit()
-            row = conn.execute("SELECT * FROM vigil_cases WHERE id = ?", (case_id,)).fetchone()
         finally:
             conn.close()
-    if not row:
-        return {"ok": False, "error": "Case not found"}
-    rec = dict(row)
-    _broadcast("vigil_case", rec)
-    return {"ok": True, "case": rec, "status": get_status()}
+
+    st = get_status()
+    _broadcast("status", st)
+    return {"ok": True, "case_id": case_id, "status_set": next_status, "vigil_synced": vigil_updated, "status": st}
+
+
+def focus_globe(lat: float, lon: float, label: str = "TARGET", alt: float = 850000.0) -> dict[str, Any]:
+    focus = {
+        "lat": float(lat),
+        "lon": float(lon),
+        "alt": float(alt),
+        "label": str(label or "TARGET")[:48],
+    }
+    with _DB_LOCK:
+        conn = _db()
+        try:
+            _set_kv(conn, "globe_focus", json.dumps(focus))
+            conn.commit()
+        finally:
+            conn.close()
+    _broadcast("globe_focus", focus)
+    return {"ok": True, "focus": focus}
 
 
 def defensive_posture_check(host: str) -> dict[str, Any]:
@@ -424,7 +520,6 @@ def defensive_posture_check(host: str) -> dict[str, Any]:
     except Exception as exc:
         report["dns_error"] = str(exc)
 
-    # TLS certificate check (passive read-only handshake)
     try:
         ctx = ssl.create_default_context()
         with socket.create_connection((clean, 443), timeout=4.0) as sock:
@@ -439,10 +534,9 @@ def defensive_posture_check(host: str) -> dict[str, Any]:
         report["tls"] = {"error": str(exc)}
         report["score"] -= 25
 
-    # HTTP security headers inspection (HEAD/GET)
     req_headers = ["strict-transport-security", "content-security-policy", "x-frame-options", "x-content-type-options"]
     try:
-        req = urllib.request.Request(f"https://{clean}/", method="HEAD", headers={"User-Agent": "ChappaV2-DefensiveAudit/2.1"})
+        req = urllib.request.Request(f"https://{clean}/", method="HEAD", headers={"User-Agent": "ChappaV2-DefensiveAudit/2.2"})
         with urllib.request.urlopen(req, timeout=4.0) as resp:
             hdrs = {k.lower(): v for k, v in resp.headers.items()}
             for h in req_headers:
@@ -461,7 +555,6 @@ def defensive_posture_check(host: str) -> dict[str, Any]:
         f"IPs {', '.join(report['ips']) or 'unresolved'} · "
         f"missing headers: {', '.join(report['missing_headers']) or 'none'}"
     )
-    # Deterministic globe coordinate hash fallback when offline (or real geo when available)
     hval = sum(ord(c) for c in clean)
     lat = round(((hval * 17) % 100) - 45.0, 3)
     lon = round(((hval * 31) % 280) - 140.0, 3)
@@ -471,7 +564,7 @@ def defensive_posture_check(host: str) -> dict[str, Any]:
             "title": f"Posture Check · {clean}",
             "target": report["ips"][0] if report["ips"] else clean,
             "severity": sev,
-            "mitre": "Defensive Posture / TLS & Headers",
+            "mitre": "T1557",
             "verdict": summary,
             "lat": lat,
             "lon": lon,
@@ -480,7 +573,30 @@ def defensive_posture_check(host: str) -> dict[str, Any]:
         },
         run_triage=False,
     )
-    return {"ok": True, "report": report, "case": triage["case"], "status": get_status()}
+    return {"ok": True, "report": report, "case": triage["case"], "vigil_backend": triage["vigil_backend"], "status": get_status()}
+
+
+def _execute_hermes_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
+    if name == "vigil_triage":
+        return vigil_create_or_triage(args, run_triage=False)
+    if name == "vigil_update_case":
+        return update_case_status(str(args.get("case_id") or ""), str(args.get("status") or "in_progress"), notes=args.get("notes"))
+    if name == "vigil_list_workflows":
+        return vigil_client.list_workflows()
+    if name == "godseye_fly_to":
+        return focus_globe(
+            float(args.get("lat", 18.0179)),
+            float(args.get("lon", -76.8099)),
+            str(args.get("label") or "TARGET"),
+            float(args.get("alt", 850000)),
+        )
+    if name == "defensive_posture_check":
+        return defensive_posture_check(str(args.get("host") or args.get("target") or ""))
+    if name == "set_mask_state":
+        ms = _set_mask_state_internal(str(args.get("state") or "IDLE"))
+        _broadcast("status", get_status())
+        return {"ok": True, "mask_state": ms}
+    return {"ok": False, "error": f"Unknown tool: {name}"}
 
 
 def handle_chat(payload: dict[str, Any]) -> dict[str, Any]:
@@ -500,50 +616,76 @@ def handle_chat(payload: dict[str, Any]) -> dict[str, Any]:
                 _set_kv(conn, "active_model", model[:120])
             conn.execute("INSERT INTO chat_messages(role, content, model, created_at) VALUES ('user', ?, ?, ?)", (text[:4000], model, now))
             conn.commit()
+            history = [dict(r) for r in conn.execute("SELECT role, content FROM chat_messages ORDER BY id DESC LIMIT 14").fetchall()]
+            history.reverse()
         finally:
             conn.close()
 
-    low = text.lower()
-    action_note = ""
-    if any(w in low for w in ("contain", "lock", "resolve")):
-        with _DB_LOCK:
-            conn = _db()
-            try:
-                _set_kv(conn, "mask_state", "CONTAINED")
-                conn.commit()
-            finally:
-                conn.close()
-        action_note = "\n[Mask State → CONTAINED]"
-    elif any(w in low for w in ("posture", "audit header", "check tls", "check dns")) and (target or "." in text):
-        host = target or next((tok.strip(".,;:()\"'") for tok in text.split() if "." in tok and not tok.startswith("http")), "")
-        if host:
-            chk = defensive_posture_check(host)
-            if chk.get("ok"):
-                action_note = f"\n[Defensive Audit Logged → Vigil Case #{chk['case']['id']}] {chk['case']['verdict']}"
-    elif any(w in low for w in ("triage", "alert", "incident", "threat", "cve", "ioc")):
-        tr = vigil_create_or_triage({"title": text[:120], "target": target, "severity": "high" if any(k in low for k in ("critical", "breach", "cve", "alert")) else "medium", "source": "hermes-chat"})
-        action_note = f"\n[Vigil SOC Case #{tr['case']['id']} · {tr['case']['mitre']}]"
-
-    cur_status = get_status()
-    ai_reply = hermes_complete(
-        "You are Chappa V2, a standalone local-first defensive Cybersecurity Agent built on Hermes, "
-        "combining Vigil AI SOC and God's Eye View 3D Globe. Keep answers sharp, tactical, and concise.\n"
-        f"Current State: {cur_status['mask_state']} | Open Vigil Cases: {cur_status['open_alerts']} | Active Target: {cur_status['active_target'] or 'none'}\n"
-        f"User: {text}",
+    status_before = get_status()
+    agent_res = hermes_bridge.run_agent_turn(
+        user_text=text if not target else f"{text} (target: {target})",
+        history=history,
+        status_snapshot=status_before,
+        tool_executor=_execute_hermes_tool,
         model=model,
     )
-    reply = (ai_reply or f"[Chappa V2 · Hermes Core] Processed '{text}'. Vigil SOC ({cur_status['open_alerts']} open) & God's Eye View ({cur_status['pins_count']} pins) synced.") + action_note
+
+    tools_used = list(agent_res.get("tools") or [])
+    provider = str(agent_res.get("provider") or "")
+
+    if agent_res.get("ok") and agent_res.get("reply"):
+        reply = str(agent_res["reply"])
+        if tools_used:
+            tool_summary = ", ".join(t["tool"] for t in tools_used)
+            reply = f"{reply}\n[Hermes Tools Executed: {tool_summary}]"
+    else:
+        # Even without an active LLM API key, still run explicit defensive/Vigil/God's Eye commands honestly
+        low = text.lower()
+        action_notes: list[str] = []
+        if any(w in low for w in ("contain", "lock", "resolve")):
+            _set_mask_state_internal("CONTAINED")
+            action_notes.append("Mask state set to CONTAINED.")
+        elif any(w in low for w in ("posture", "audit", "check tls", "check dns", "inspect")) and (target or "." in text):
+            host = target or next((tok.strip(".,;:()\"'") for tok in text.split() if "." in tok and not tok.startswith("http")), "")
+            if host:
+                chk = defensive_posture_check(host)
+                if chk.get("ok"):
+                    action_notes.append(f"Defensive audit logged to {chk['vigil_backend']} (Case {chk['case'].get('id')}): {chk['case'].get('verdict')}")
+        elif any(w in low for w in ("triage", "alert", "incident", "threat", "cve", "ioc")):
+            sev = "high" if any(k in low for k in ("critical", "high", "breach", "cve", "alert")) else "medium"
+            tr = vigil_create_or_triage({"title": text[:120], "target": target, "severity": sev, "source": "hermes-chat"}, run_triage=False)
+            action_notes.append(f"Created real Vigil case {tr['case'].get('id')} ({tr['vigil_backend']}).")
+
+        st_now = get_status()
+        err_hint = agent_res.get("error") or "No LLM provider configured"
+        if action_notes:
+            reply = "\n".join(action_notes) + f"\n(Hermes LLM note: {err_hint} — connect a model in Assimilis or ~/.hermes/.env for full conversational reasoning.)"
+        else:
+            reply = (
+                f"[Chappa V2 · Hermes Engine] Full Vigil AI SOC ({st_now['bridges']['vigil']['mode']}, "
+                f"{st_now['open_alerts']} open cases, {st_now['workflows_count']} playbooks) & "
+                f"Full God's Eye View ({st_now['bridges']['godseye']['mode']}) are wired.\n"
+                f"LLM provider unavailable ({err_hint}). Select an active model in Assimilis or set a key in ~/.hermes/.env."
+            )
 
     with _DB_LOCK:
         conn = _db()
         try:
-            conn.execute("INSERT INTO chat_messages(role, content, model, created_at) VALUES ('assistant', ?, ?, ?)", (reply[:6000], model, time.time()))
+            conn.execute("INSERT INTO chat_messages(role, content, model, created_at) VALUES ('assistant', ?, ?, ?)", (reply[:6000], provider or model, time.time()))
             conn.commit()
         finally:
             conn.close()
 
-    _broadcast("chat_reply", {"reply": reply, "model": model})
-    return {"ok": True, "reply": reply, "model": model, "mask_state": get_status()["mask_state"], "status": get_status()}
+    st_after = get_status()
+    _broadcast("chat_reply", {"reply": reply, "model": provider or model, "tools": tools_used})
+    return {
+        "ok": True,
+        "reply": reply,
+        "model": provider or model,
+        "tools": tools_used,
+        "mask_state": st_after["mask_state"],
+        "status": st_after,
+    }
 
 
 MIME_TYPES = {
@@ -558,7 +700,7 @@ MIME_TYPES = {
 
 
 class ChappaHandler(BaseHTTPRequestHandler):
-    server_version = "ChappaV2/2.1"
+    server_version = "ChappaV2/2.2"
 
     def log_message(self, format: str, *args: Any) -> None:
         return
@@ -570,7 +712,8 @@ class ChappaHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(raw)))
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
-        self.wfile.write(raw)
+        if self.command != "HEAD":
+            self.wfile.write(raw)
 
     def _read_json(self) -> dict[str, Any]:
         length = int(self.headers.get("Content-Length") or "0")
@@ -594,9 +737,49 @@ class ChappaHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(data)))
         self.send_header("Cache-Control", "no-cache")
         self.end_headers()
-        self.wfile.write(data)
+        if self.command != "HEAD":
+            self.wfile.write(data)
+
+    def _maybe_proxy_upstream(self, method: str) -> bool:
+        path = urlparse(self.path).path
+        if path == "/vigil" or path.startswith("/vigil/"):
+            reverse_proxy.proxy_vigil(self, method)
+            return True
+        if path == "/godseye" or path.startswith("/godseye/"):
+            reverse_proxy.proxy_godseye(self, method)
+            return True
+        return False
+
+    def do_OPTIONS(self) -> None:
+        if self._maybe_proxy_upstream("OPTIONS"):
+            return
+        self.send_response(204)
+        self.send_header("Allow", "GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS")
+        self.end_headers()
+
+    def do_HEAD(self) -> None:
+        if self._maybe_proxy_upstream("HEAD"):
+            return
+        self.do_GET()
+
+    def do_PUT(self) -> None:
+        if self._maybe_proxy_upstream("PUT"):
+            return
+        self._send_json({"ok": False, "error": "Unsupported PUT path"}, status=404)
+
+    def do_PATCH(self) -> None:
+        if self._maybe_proxy_upstream("PATCH"):
+            return
+        self._send_json({"ok": False, "error": "Unsupported PATCH path"}, status=404)
+
+    def do_DELETE(self) -> None:
+        if self._maybe_proxy_upstream("DELETE"):
+            return
+        self._send_json({"ok": False, "error": "Unsupported DELETE path"}, status=404)
 
     def do_GET(self) -> None:
+        if self._maybe_proxy_upstream("GET"):
+            return
         path = urlparse(self.path).path
         if path in ("/", "/index.html"):
             return self._serve_file("index.html")
@@ -604,12 +787,18 @@ class ChappaHandler(BaseHTTPRequestHandler):
             return self._serve_file("embed.html")
         if path == "/api/chappa/status":
             return self._send_json(get_status())
+        if path == "/api/chappa/services":
+            return self._send_json({"ok": True, "services": MANAGER.status()})
         if path == "/api/chappa/models":
-            return self._send_json({"ok": True, "models": fetch_assimilis_models()})
+            return self._send_json({"ok": True, "models": hermes_bridge.fetch_models()})
         if path == "/api/chappa/chat":
             return self._send_json({"ok": True, "messages": get_status()["chat_history"]})
         if path == "/api/chappa/vigil/cases":
             return self._send_json({"ok": True, "cases": get_status()["cases"]})
+        if path == "/api/chappa/vigil/findings":
+            return self._send_json(vigil_client.list_findings(limit=50))
+        if path == "/api/chappa/vigil/workflows":
+            return self._send_json(vigil_client.list_workflows())
         if path == "/api/chappa/globe/feed":
             st = get_status()
             return self._send_json({"ok": True, "pins": st["pins"], "focus": st["globe_focus"], "godseye_bridge": st["bridges"]["godseye"]})
@@ -627,7 +816,8 @@ class ChappaHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/plain; charset=utf-8")
             self.send_header("Content-Length", str(len(data)))
             self.end_headers()
-            self.wfile.write(data)
+            if self.command != "HEAD":
+                self.wfile.write(data)
             return
         if path == "/api/chappa/events":
             self.send_response(200)
@@ -661,8 +851,23 @@ class ChappaHandler(BaseHTTPRequestHandler):
         return self._serve_file(path)
 
     def do_POST(self) -> None:
+        if self._maybe_proxy_upstream("POST"):
+            return
         path = urlparse(self.path).path
         body = self._read_json()
+
+        if path == "/api/chappa/services/control":
+            svc = str(body.get("service") or "all").strip().lower()
+            act = str(body.get("action") or "start").strip().lower()
+            if act == "stop":
+                st = MANAGER.stop_service(svc)
+            elif act == "restart":
+                MANAGER.stop_service(svc)
+                st = MANAGER.start_service(svc)
+            else:
+                st = MANAGER.start_service(svc)
+            _broadcast("status", get_status())
+            return self._send_json({"ok": True, "services": st})
 
         if path == "/api/chappa/state":
             with _DB_LOCK:
@@ -727,30 +932,23 @@ class ChappaHandler(BaseHTTPRequestHandler):
 
         if path.startswith("/api/chappa/vigil/cases/") and path.endswith("/status"):
             parts = path.strip("/").split("/")
-            try:
-                cid = int(parts[4])
-            except Exception:
+            cid = parts[4] if len(parts) > 4 else ""
+            if not cid:
                 return self._send_json({"ok": False, "error": "Invalid case id"}, status=400)
-            return self._send_json(update_case_status(cid, str(body.get("status") or "")))
+            return self._send_json(update_case_status(cid, str(body.get("status") or ""), notes=body.get("notes")))
 
         if path == "/api/chappa/telemetry/check":
             return self._send_json(defensive_posture_check(str(body.get("host") or body.get("target") or "")))
 
         if path == "/api/chappa/globe/focus":
-            focus = {
-                "lat": float(body.get("lat", 18.0179)),
-                "lon": float(body.get("lon", -76.8099)),
-                "label": str(body.get("label") or "TARGET")[:48],
-            }
-            with _DB_LOCK:
-                conn = _db()
-                try:
-                    _set_kv(conn, "globe_focus", json.dumps(focus))
-                    conn.commit()
-                finally:
-                    conn.close()
-            _broadcast("globe_focus", focus)
-            return self._send_json({"ok": True, "focus": focus})
+            return self._send_json(
+                focus_globe(
+                    float(body.get("lat", 18.0179)),
+                    float(body.get("lon", -76.8099)),
+                    str(body.get("label") or "TARGET"),
+                    float(body.get("alt", 850000)),
+                )
+            )
 
         if path == "/api/chappa/globe/pin":
             now = time.time()
@@ -789,15 +987,17 @@ class ChappaHandler(BaseHTTPRequestHandler):
 
 def main() -> None:
     init_db()
+    MANAGER.start_all_async(on_change=lambda _svc: _broadcast("status", get_status()))
     host = os.environ.get("CHAPPA_HOST", "127.0.0.1")
     port = int(os.environ.get("CHAPPA_PORT", "7480"))
     srv = ThreadingHTTPServer((host, port), ChappaHandler)
-    print(f"[chappa-v2] listening on http://{host}:{port} (state: {STATE_DIR})")
+    print(f"[chappa-v2] listening on http://{host}:{port} (state: {STATE_DIR}) | Vigil -> /vigil/ | God's Eye -> /godseye/")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
         pass
     finally:
+        MANAGER.shutdown_children()
         srv.server_close()
 
 

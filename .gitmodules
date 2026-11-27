@@ -1,0 +1,6 @@
+[submodule "apps/gods-eye-view"]
+	path = apps/gods-eye-view
+	url = https://github.com/wearecyberrock/gods-eye-view.git
+[submodule "apps/vigil"]
+	path = apps/vigil
+	url = https://github.com/wearecyberrock/vigil.git

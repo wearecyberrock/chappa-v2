@@ -899,10 +899,12 @@
       pmvy *= Math.exp(-9 * dt);
     }
 
+    let paused = false;
+
     function render(now) {
       if (!alive) return;
       rafId = requestAnimationFrame(render);
-      if (document.hidden) return;
+      if (paused || document.hidden) return;
       const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const minInterval = fps <= 12 ? 80 : 14;
       if (now - lastDraw < minInterval) return;
@@ -1000,6 +1002,7 @@
         if (!active) targetSpeech = 0;
       },
       setFps(next) { fps = Number(next) <= 12 ? 12 : 60; },
+      setPaused(flag) { paused = !!flag; },
       setTheme(next) { redTheme = next !== 'agentsar'; },
       loadObjMesh(objText) {
         const pts = parseObjToParticles(objText);
