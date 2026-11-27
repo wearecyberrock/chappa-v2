@@ -9,10 +9,134 @@
 
   let globe = null;
   let lastStatus = null;
+  let voiceEnabled = true;
+  let audioCtx = null;
+  let activeAudio = null;
+  let voiceRaf = 0;
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
+
+  function stopSpeaking() {
+    if (voiceRaf) { cancelAnimationFrame(voiceRaf); voiceRaf = 0; }
+    if (activeAudio) {
+      try { activeAudio.pause(); activeAudio.src = ''; } catch (_) {}
+      activeAudio = null;
+    }
+    try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (_) {}
+    stage.setSpeaking(false);
+    stage.setSpeechLevel(0);
+  }
+
+  window.toggleVoice = function () {
+    voiceEnabled = !voiceEnabled;
+    const btn = document.getElementById('voiceBtn');
+    if (btn) {
+      btn.classList.toggle('on', voiceEnabled);
+      btn.textContent = voiceEnabled ? 'Voice: Fish/Studio' : 'Voice: Muted';
+    }
+    if (!voiceEnabled) stopSpeaking();
+  };
+
+  async function speakReply(rawText) {
+    if (!voiceEnabled) return;
+    const text = String(rawText || '').replace(/[`*_#>\[\]]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 600);
+    if (!text) return;
+    stopSpeaking();
+
+    // Try Assimilis Voice Studio / Fish Audio directly on same origin (/api/world/voice), then Chappa proxy
+    let voiceData = null;
+    const endpoints = [
+      { url: '/api/world/voice', body: { op: 'speak', text, engine: 'auto', persona: 'jarvis', prefer_fish: true } },
+      { url: 'api/chappa/voice/speak', body: { text, engine: 'auto', persona: 'jarvis', prefer_fish: true } }
+    ];
+    for (const ep of endpoints) {
+      try {
+        const r = await fetch(ep.url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(ep.body)
+        });
+        if (r.ok) {
+          const d = await r.json();
+          if (d && d.ok && d.audio_b64) { voiceData = d; break; }
+        }
+      } catch (_) {}
+    }
+
+    if (voiceData && voiceData.audio_b64) {
+      try {
+        const bin = atob(voiceData.audio_b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const blob = new Blob([bytes], { type: voiceData.mime || 'audio/mpeg' });
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        activeAudio = audio;
+
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        let analyser = null, samples = null;
+        if (Ctx) {
+          if (!audioCtx) audioCtx = new Ctx();
+          if (audioCtx.state === 'suspended') await audioCtx.resume().catch(() => {});
+          const src = audioCtx.createMediaElementSource(audio);
+          analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 256;
+          analyser.smoothingTimeConstant = 0.72;
+          samples = new Uint8Array(analyser.fftSize);
+          src.connect(analyser);
+          analyser.connect(audioCtx.destination);
+        }
+
+        stage.setSpeaking(true);
+        const pump = () => {
+          if (!activeAudio || activeAudio.paused || activeAudio.ended) return;
+          if (analyser && samples) {
+            analyser.getByteTimeDomainData(samples);
+            let sum = 0;
+            for (let i = 0; i < samples.length; i++) {
+              const v = (samples[i] - 128) / 128;
+              sum += v * v;
+            }
+            const rms = Math.min(1.0, Math.sqrt(sum / samples.length) * 4.2);
+            stage.setSpeechLevel(rms);
+          }
+          voiceRaf = requestAnimationFrame(pump);
+        };
+
+        audio.onplay = () => { voiceRaf = requestAnimationFrame(pump); };
+        audio.onended = () => { URL.revokeObjectURL(url); stopSpeaking(); };
+        audio.onerror = () => { URL.revokeObjectURL(url); stopSpeaking(); };
+        await audio.play();
+        return;
+      } catch (_) {
+        stopSpeaking();
+      }
+    }
+
+    // Graceful offline fallback: Web Speech API + syllabic eye glow modulation
+    if (typeof window.speechSynthesis !== 'undefined' && typeof SpeechSynthesisUtterance !== 'undefined') {
+      try {
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 1.02;
+        u.onstart = () => stage.setSpeaking(true);
+        u.onend = () => stopSpeaking();
+        u.onerror = () => stopSpeaking();
+        window.speechSynthesis.speak(u);
+      } catch (_) {}
+    }
+  }
+
+  // Allow Assimilis parent shell to drive live Voice Studio / Fish speech level directly
+  window.addEventListener('message', (ev) => {
+    const d = ev && ev.data;
+    if (!d || typeof d !== 'object') return;
+    if (typeof d.chappaSpeechLevel === 'number') stage.setSpeechLevel(d.chappaSpeechLevel);
+    if (typeof d.chappaSpeaking === 'boolean') stage.setSpeaking(d.chappaSpeaking);
+  });
+  window.chappaMaskStage = stage;
+  window.chappaSpeak = speakReply;
 
   // Try loading optional custom 3D .OBJ mask from ~/.chappa/modules/custom_mask.obj
   fetch('api/chappa/custom-mask.obj')
@@ -99,7 +223,10 @@
     });
     if (!r.ok) return;
     const data = await r.json();
-    if (data.reply) showReply(data.reply);
+    if (data.reply) {
+      showReply(data.reply);
+      speakReply(data.reply);
+    }
     if (data.status) applyStatus(data.status);
   };
 

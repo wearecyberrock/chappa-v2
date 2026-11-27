@@ -687,6 +687,41 @@ class ChappaHandler(BaseHTTPRequestHandler):
         if path in ("/api/chappa/chat", "/api/chappa/command"):
             return self._send_json(handle_chat(body))
 
+        if path == "/api/chappa/voice/speak":
+            text = " ".join(str(body.get("text") or "").split())[:1200]
+            if not text:
+                return self._send_json({"ok": False, "error": "text is required"}, status=400)
+            assimilis_url = os.environ.get("ASSIMILIS_URL", "").strip().rstrip("/")
+            if not assimilis_url:
+                return self._send_json({"ok": False, "error": "Assimilis Voice Studio bridge not connected", "fallback": "browser"}, status=200)
+            payload = {
+                "op": "speak",
+                "text": text,
+                "engine": str(body.get("engine") or "auto"),
+                "persona": str(body.get("persona") or "jarvis"),
+                "prefer_fish": body.get("prefer_fish", True) is not False,
+            }
+            if body.get("voice"):
+                payload["voice"] = str(body.get("voice"))
+            if body.get("fish_voice"):
+                payload["fish_voice"] = str(body.get("fish_voice"))
+            try:
+                hdrs = {"Content-Type": "application/json"}
+                cookie = self.headers.get("Cookie")
+                if cookie:
+                    hdrs["Cookie"] = cookie
+                req = urllib.request.Request(
+                    f"{assimilis_url}/api/world/voice",
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers=hdrs,
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=22) as resp:
+                    data = json.loads(resp.read().decode("utf-8", errors="replace"))
+                    return self._send_json(data, status=resp.status)
+            except Exception as exc:
+                return self._send_json({"ok": False, "error": str(exc), "fallback": "browser"}, status=200)
+
         if path in ("/api/chappa/vigil/cases", "/api/chappa/vigil/triage", "/api/chappa/telemetry/ingest"):
             return self._send_json(vigil_create_or_triage(body, run_triage=(path != "/api/chappa/vigil/cases")))
 

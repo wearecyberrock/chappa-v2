@@ -1,17 +1,20 @@
 /* ==========================================================================
-   Chappa V2 — True WebGL2 3D Sculpted Hacker Mask + Particle Core Engine
-   - ~32,000-triangle high-poly anatomical Guy Fawkes 3D mask mesh with
-     smooth analytical normals, deep eye sockets, real pierced eye & mouth
-     slits, sculpted nose/cheekbones/lips/chin, and inner shell rim depth
-   - 1024x1024 procedural PBR albedo + gloss + ambient occlusion texture
-     (porcelain sheen, arched brows, rosy blush cheeks, handlebar mustache,
-     pointed goatee, subtle Spider-Verse halftone accent)
-   - Multi-light Blinn-Phong + Fresnel Cyan/Crimson Hologram WebGL2 shader
-   - Assimilis-Core-style 3D particle halo & precision orbital HUD rings
-   - Custom .OBJ drop-in support (loadObjMesh) + graceful 2D fallback
+   Chappa V2 — Floating 3D Binary (1 & 0) Particle Hacker Mask Core
+   - Powered by Assimilis Holo Particle Physics (spring-to-3D-target + 3D curl
+     murmuration + cursor parting/vortex swirl + state scatter-reassemble)
+   - ZERO solid skin/shell: the 3D Guy Fawkes Hacker Mask is formed purely out
+     of ~2,200 floating, glowing 3D `1` and `0` particles suspended in space,
+     with negative-space void for eyes, brows, handlebar mustache, smile & goatee
+   - Live Voice-Reactive Glowing Eyes: driven by Assimilis Fish Audio / Voice
+     Studio Web Audio AnalyserNode (dormant hollow sockets when silent -> blazing
+     crimson-white pulsing eyes + acoustic particle ripples when speaking!)
+   - Drop-in custom .OBJ particle morphing (~/.chappa/modules/custom_mask.obj)
+   - Respects prefers-reduced-motion & pauses when document.hidden
    ========================================================================== */
 (function (root) {
   'use strict';
+
+  const TAU = Math.PI * 2;
 
   function smoothstep(e0, e1, x) {
     const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0)));
@@ -23,62 +26,55 @@
     return Math.exp(-(dx * dx + dy * dy));
   }
 
-  // Authentic Guy Fawkes mask silhouette: broad smoothly rounded forehead crown, full cheeks, rounded chin
+  // Authentic Guy Fawkes silhouette: broad smoothly rounded forehead crown, full cheeks, tapered chin
   function maskBoundary(u, v) {
-    // v: -1 (top of forehead) -> +1 (tip of chin)
     if (v < -0.25) {
-      const t = (-v - 0.25) / 0.75; // 0 at brow -> 1 at top crown
+      const t = (-v - 0.25) / 0.75;
       return Math.max(0.06, 0.88 * Math.pow(Math.max(0.0, 1.0 - Math.pow(t, 4.4)), 0.34));
     }
-    const t = (v + 0.25) / 1.25; // 0 at brow -> 1 at chin
+    const t = (v + 0.25) / 1.25;
     const cheek = 0.045 * Math.sin(Math.min(1, t * 2.1) * Math.PI);
     const jaw = 0.88 * Math.pow(Math.max(0.0, 1.0 - Math.pow(t, 2.15) * 0.96), 0.56);
     return Math.max(0.06, jaw + cheek * (1.0 - smoothstep(0.65, 1.0, t)));
   }
 
-  // Sculpted 3D facial heightfield z(u, v) — realistic smooth porcelain relief
+  // Sculpted 3D facial heightfield z(u, v)
   function maskHeight(u, v) {
     const au = Math.abs(u);
     const hw = maskBoundary(u, v);
     const rn = Math.min(1.0, au / Math.max(0.06, hw));
 
-    // Smooth curved porcelain shell
-    const domeU = Math.sqrt(Math.max(0.002, 1.0 - rn * rn * 0.86)) * 0.68;
+    const domeU = Math.sqrt(Math.max(0.002, 1.0 - rn * rn * 0.86)) * 0.70;
     const domeV = Math.cos(v * 1.08) * 0.20;
-
-    // Smooth forehead dome + subtle brow arch
     const forehead = gauss2(u, v, 0.0, -0.58, 0.62, 0.30) * 0.12;
     const temple = -gauss2(au, v, 0.68, -0.34, 0.22, 0.22) * 0.045;
 
     const browArchY = -0.35 + Math.pow((au - 0.34) * 1.3, 2) * 0.20;
-    const browRidge = Math.exp(-Math.pow((v - browArchY) / 0.09, 2)) * smoothstep(0.04, 0.18, au) * (1.0 - smoothstep(0.58, 0.82, au)) * 0.075;
+    const browRidge = Math.exp(-Math.pow((v - browArchY) / 0.09, 2))
+      * smoothstep(0.04, 0.18, au) * (1.0 - smoothstep(0.58, 0.82, au)) * 0.08;
 
-    // Deep smooth orbital eye sockets + subtle lids
-    const eyeSocket = -gauss2(au, v, 0.34, -0.175, 0.21, 0.13) * 0.165;
-    const upperLid = gauss2(au, v, 0.34, -0.235, 0.18, 0.055) * 0.05;
-    const lowerLid = gauss2(au, v, 0.34, -0.092, 0.19, 0.06) * 0.042;
+    const eyeSocket = -gauss2(au, v, 0.34, -0.175, 0.20, 0.11) * 0.09;
+    const upperLid = gauss2(au, v, 0.34, -0.235, 0.18, 0.055) * 0.04;
+    const lowerLid = gauss2(au, v, 0.34, -0.092, 0.19, 0.06) * 0.045;
 
-    // Realistic sculpted nose bridge, rounded tip, alar wings & subtle nostrils
     const noseBridge = Math.exp(-Math.pow(u / (0.115 + Math.max(0, v + 0.20) * 0.11), 2))
-      * smoothstep(-0.34, -0.12, v) * (1.0 - smoothstep(0.14, 0.25, v)) * (0.19 + smoothstep(-0.22, 0.12, v) * 0.15);
-    const noseTip = gauss2(u, v, 0.0, 0.125, 0.13, 0.098) * 0.165;
-    const noseWing = gauss2(au, v, 0.13, 0.155, 0.085, 0.068) * 0.085;
+      * smoothstep(-0.34, -0.12, v) * (1.0 - smoothstep(0.14, 0.25, v)) * (0.20 + smoothstep(-0.22, 0.12, v) * 0.16);
+    const noseTip = gauss2(u, v, 0.0, 0.125, 0.13, 0.098) * 0.18;
+    const noseWing = gauss2(au, v, 0.13, 0.155, 0.085, 0.068) * 0.09;
     const nostrilIndent = -gauss2(au, v, 0.076, 0.205, 0.045, 0.032) * 0.075;
     const underNose = -gauss2(u, v, 0.0, 0.248, 0.17, 0.045) * 0.055;
 
-    // Smooth fuller cheekbones + very gentle smile cheek puff (no harsh diagonal lines!)
-    const cheekbone = gauss2(au, v, 0.46, 0.06, 0.28, 0.22) * 0.145;
-    const midCheek = gauss2(au, v, 0.40, 0.25, 0.26, 0.20) * 0.085;
-    const smilePuff = gauss2(au, v, 0.30, 0.30, 0.15, 0.14) * 0.04;
+    const cheekbone = gauss2(au, v, 0.46, 0.06, 0.28, 0.22) * 0.155;
+    const midCheek = gauss2(au, v, 0.40, 0.25, 0.26, 0.20) * 0.09;
+    const smilePuff = gauss2(au, v, 0.30, 0.30, 0.15, 0.14) * 0.045;
 
-    // Sculpted lips + rounded chin
-    const upperLip = gauss2(u, v, 0.0, 0.365, 0.29, 0.07) * 0.08;
+    const upperLip = gauss2(u, v, 0.0, 0.365, 0.29, 0.07) * 0.085;
     const mouthCrease = -gauss2(u, v, 0.0, 0.45, 0.24, 0.028) * 0.065;
-    const lowerLip = gauss2(u, v, 0.0, 0.52, 0.25, 0.068) * 0.085;
+    const lowerLip = gauss2(u, v, 0.0, 0.52, 0.25, 0.068) * 0.09;
     const chinHollow = -gauss2(u, v, 0.0, 0.625, 0.24, 0.07) * 0.045;
-    const chinBoss = gauss2(u, v, 0.0, 0.78, 0.26, 0.17) * 0.13;
+    const chinBoss = gauss2(u, v, 0.0, 0.78, 0.26, 0.17) * 0.135;
 
-    const edgeRoll = -Math.pow(smoothstep(0.84, 1.0, rn), 1.8) * 0.15;
+    const edgeRoll = -Math.pow(smoothstep(0.84, 1.0, rn), 1.8) * 0.16;
 
     return domeU + domeV + forehead + temple + browRidge + eyeSocket + upperLid + lowerLid
       + noseBridge + noseTip + noseWing + nostrilIndent + underNose
@@ -86,75 +82,21 @@
       + upperLip + mouthCrease + lowerLip + chinHollow + chinBoss + edgeRoll - 0.36;
   }
 
-  // Signed distance to pierced eye slits & mouth slit (negative = inside cutout)
+  // Signed distance to sleek squinting Guy Fawkes almond eye cutouts (negative = hollow eye socket)
   function eyeSlitSdf(u, v) {
     const au = Math.abs(u);
-    const ex = (au - 0.345) / 0.155;
-    const arch = -0.172 + ex * ex * 0.032 - ex * 0.012;
+    const ex = (au - 0.345) / 0.162;
+    if (Math.abs(ex) >= 1.0) return 0.12;
+    const arch = -0.168 + ex * ex * 0.036 - ex * 0.010;
     const dy = v - arch;
-    const topH = 0.052 * Math.max(0.0, 1.0 - ex * ex);
-    const botH = 0.024 * Math.max(0.0, 1.0 - ex * ex);
-    if (Math.abs(ex) >= 1.0) return 0.1;
-    if (dy < 0) return (-dy) - topH;
-    return dy - botH;
+    const topH = 0.045 * Math.max(0.0, 1.0 - ex * ex);
+    const botH = 0.022 * Math.max(0.0, 1.0 - ex * ex);
+    return dy < 0 ? (-dy - topH) : (dy - botH);
   }
 
-  function buildHighPolyMaskMesh() {
-    const NU = 112, NV = 128;
-    const pos = [];
-    const norm = [];
-    const uv = [];
-    const idx = [];
-    const gridIdx = Array.from({ length: NV + 1 }, () => new Int32Array(NU + 1).fill(-1));
-
-    const eps = 0.009;
-    for (let iv = 0; iv <= NV; iv++) {
-      const v = (iv / NV) * 2.0 - 1.0; // -1 top .. +1 chin
-      const hw = maskBoundary(0, v);
-      for (let iu = 0; iu <= NU; iu++) {
-        const s = (iu / NU) * 2.0 - 1.0;
-        const u = s * hw;
-        const x = u * 1.02;
-        const y = -v * 1.12;
-        const z = maskHeight(u, v);
-
-        const dzdu = (maskHeight(u + eps, v) - maskHeight(u - eps, v)) / (2 * eps);
-        const dzdv = (maskHeight(u, v + eps) - maskHeight(u, v - eps)) / (2 * eps);
-        let nx = -dzdu / 1.02;
-        let ny = dzdv / 1.12;
-        let nz = 1.0;
-        const nlen = Math.hypot(nx, ny, nz) || 1.0;
-        nx /= nlen; ny /= nlen; nz /= nlen;
-
-        const vi = pos.length / 3;
-        gridIdx[iv][iu] = vi;
-        pos.push(x, y, z);
-        norm.push(nx, ny, nz);
-        uv.push((u + 1.0) * 0.5, (v + 1.0) * 0.5);
-      }
-    }
-
-    for (let iv = 0; iv < NV; iv++) {
-      for (let iu = 0; iu < NU; iu++) {
-        const a = gridIdx[iv][iu];
-        const b = gridIdx[iv][iu + 1];
-        const c = gridIdx[iv + 1][iu + 1];
-        const d = gridIdx[iv + 1][iu];
-        idx.push(a, d, b, b, d, c);
-      }
-    }
-
-    return {
-      positions: new Float32Array(pos),
-      normals: new Float32Array(norm),
-      uvs: new Float32Array(uv),
-      indices: new Uint32Array(idx)
-    };
-  }
-
-  // Paint crisp 1024x1024 Guy Fawkes Feature + AO Map (drives 3D Binary 1/0 face relief — zero weird skin!)
-  function buildMaskTextureCanvas() {
-    const S = 1024;
+  // Crisp 512x512 feature/negative-space map: black = carved void (brows, handlebar mustache, smile, goatee)
+  function buildFeatureMaskData() {
+    const S = 512;
     const c = document.createElement('canvas');
     c.width = S; c.height = S;
     const g = c.getContext('2d');
@@ -173,18 +115,14 @@
       rg.addColorStop(1, 'rgba(0,0,0,0)');
       g.fillStyle = rg;
       g.beginPath();
-      g.arc(0, 0, 1, 0, Math.PI * 2);
+      g.arc(0, 0, 1, 0, TAU);
       g.fill();
       g.restore();
     }
 
-    // Subtle anatomical ambient occlusion in eye sockets, nostrils, under-nose & chin hollow
-    softSpot(-0.34, -0.175, 0.24, 0.145, 'rgba(0, 0, 0, 0.34)');
-    softSpot(0.34, -0.175, 0.24, 0.145, 'rgba(0, 0, 0, 0.34)');
-    softSpot(0.0, 0.22, 0.16, 0.06, 'rgba(0, 0, 0, 0.30)');
-    softSpot(-0.075, 0.202, 0.052, 0.036, 'rgba(0, 0, 0, 0.82)');
-    softSpot(0.075, 0.202, 0.052, 0.036, 'rgba(0, 0, 0, 0.82)');
-    softSpot(0.0, 0.60, 0.20, 0.065, 'rgba(0, 0, 0, 0.20)');
+    // Subtle nostril indentations only (keep bright 1/0 eyelid ribbon between arched brow and sleek almond eye!)
+    softSpot(-0.075, 0.205, 0.046, 0.030, 'rgba(0,0,0,0.78)');
+    softSpot(0.075, 0.205, 0.046, 0.030, 'rgba(0,0,0,0.78)');
 
     function drawMirrorShape(fn) {
       [-1, 1].forEach((sgn) => {
@@ -198,48 +136,48 @@
       });
     }
 
-    // Crisp carved arched Guy Fawkes eyebrows
+    // Iconic slim arched Guy Fawkes eyebrows (leaves clean glowing eyelid gap above the almond eyes)
     drawMirrorShape((s) => {
-      g.moveTo(px(s * 0.095), py(-0.295));
-      g.bezierCurveTo(px(s * 0.24), py(-0.445), px(s * 0.48), py(-0.445), px(s * 0.645), py(-0.305));
-      g.bezierCurveTo(px(s * 0.50), py(-0.360), px(s * 0.26), py(-0.360), px(s * 0.125), py(-0.258));
+      g.moveTo(px(s * 0.11), py(-0.315));
+      g.bezierCurveTo(px(s * 0.25), py(-0.460), px(s * 0.49), py(-0.460), px(s * 0.65), py(-0.315));
+      g.bezierCurveTo(px(s * 0.50), py(-0.395), px(s * 0.27), py(-0.395), px(s * 0.13), py(-0.282));
     });
 
-    // Crisp carved upturned curled handlebar mustache
+    // Iconic curled upturned handlebar mustache (crisp negative space cutout matching image.png!)
     drawMirrorShape((s) => {
       g.moveTo(px(s * 0.004), py(0.320));
-      g.bezierCurveTo(px(s * 0.12), py(0.278), px(s * 0.24), py(0.392), px(s * 0.44), py(0.380));
-      g.bezierCurveTo(px(s * 0.545), py(0.370), px(s * 0.605), py(0.302), px(s * 0.645), py(0.222));
-      g.bezierCurveTo(px(s * 0.580), py(0.340), px(s * 0.505), py(0.432), px(s * 0.34), py(0.442));
-      g.bezierCurveTo(px(s * 0.19), py(0.450), px(s * 0.08), py(0.390), px(s * 0.004), py(0.384));
+      g.bezierCurveTo(px(s * 0.12), py(0.280), px(s * 0.24), py(0.388), px(s * 0.44), py(0.376));
+      g.bezierCurveTo(px(s * 0.545), py(0.365), px(s * 0.61), py(0.295), px(s * 0.655), py(0.215));
+      g.bezierCurveTo(px(s * 0.585), py(0.340), px(s * 0.505), py(0.432), px(s * 0.34), py(0.442));
+      g.bezierCurveTo(px(s * 0.19), py(0.448), px(s * 0.08), py(0.392), px(s * 0.004), py(0.384));
     });
 
-    // Crisp carved smile lip slit
+    // Crisp carved smile slit
     g.strokeStyle = '#000000';
-    g.lineWidth = 10;
+    g.lineWidth = 7;
     g.lineCap = 'round';
     g.beginPath();
-    g.moveTo(px(-0.25), py(0.458));
-    g.quadraticCurveTo(px(0), py(0.485), px(0.25), py(0.458));
+    g.moveTo(px(-0.25), py(0.462));
+    g.quadraticCurveTo(px(0), py(0.490), px(0.25), py(0.462));
     g.stroke();
 
     // Iconic tapered pointed goatee
     g.beginPath();
-    g.moveTo(px(-0.088), py(0.572));
-    g.quadraticCurveTo(px(0), py(0.554), px(0.088), py(0.572));
-    g.bezierCurveTo(px(0.068), py(0.73), px(0.045), py(0.86), px(0.0), py(0.958));
-    g.bezierCurveTo(px(-0.045), py(0.86), px(-0.068), py(0.73), px(-0.088), py(0.572));
+    g.moveTo(px(-0.088), py(0.575));
+    g.quadraticCurveTo(px(0), py(0.556), px(0.088), py(0.575));
+    g.bezierCurveTo(px(0.068), py(0.73), px(0.044), py(0.86), px(0.0), py(0.955));
+    g.bezierCurveTo(px(-0.044), py(0.86), px(-0.068), py(0.73), px(-0.088), py(0.575));
     g.closePath();
     g.fillStyle = '#000000';
     g.fill();
 
-    return c;
+    const img = g.getImageData(0, 0, S, S).data;
+    return { S, img };
   }
 
   // Crisp 512x256 Dual-Channel Binary Glyph Atlas:
-  //   Tile 0 (x: 0..256) = '0', Tile 1 (x: 256..512) = '1'
-  //   R channel = razor-sharp monospace digit core
-  //   G channel = soft radial neon Matrix glow halo
+  //   Tile 0 (0..256) = '0', Tile 1 (256..512) = '1'
+  //   R = crisp geometric digit stroke, G = soft neon glow bloom
   function buildBinaryGlyphAtlas() {
     const c = document.createElement('canvas');
     c.width = 512; c.height = 256;
@@ -251,336 +189,331 @@
     g.textAlign = 'center';
     g.textBaseline = 'middle';
 
-    // Soft neon bloom halo in G channel
     g.shadowColor = '#00ff00';
-    g.shadowBlur = 26;
-    g.fillStyle = '#00b800';
-    g.fillText('0', 128, 134);
-    g.fillText('1', 384, 134);
-    g.fillText('0', 128, 134);
-    g.fillText('1', 384, 134);
+    g.shadowBlur = 28;
+    g.fillStyle = '#00c400';
+    g.fillText('0', 128, 134); g.fillText('1', 384, 134);
+    g.fillText('0', 128, 134); g.fillText('1', 384, 134);
 
-    // Razor-sharp core strokes in R channel (additive over G)
     g.globalCompositeOperation = 'lighter';
     g.shadowBlur = 0;
     g.fillStyle = '#ff0000';
-    g.fillText('0', 128, 134);
-    g.fillText('1', 384, 134);
-
+    g.fillText('0', 128, 134); g.fillText('1', 384, 134);
     return c;
   }
 
-  // Parse optional custom .OBJ mesh dropped into ~/.chappa/modules/custom_mask.obj
-  function parseObjText(text) {
-    const rawV = [], rawN = [], rawT = [];
-    const pos = [], norm = [], uv = [], idx = [];
+  // Sample floating 3D `1` & `0` particles across the Guy Fawkes 3D topology (ZERO solid mesh!)
+  function buildMaskParticleCloud() {
+    const feat = buildFeatureMaskData();
+    const readFeat = (u, v) => {
+      const ix = Math.max(0, Math.min(feat.S - 1, Math.round((u + 1.0) * 0.5 * (feat.S - 1))));
+      const iy = Math.max(0, Math.min(feat.S - 1, Math.round((v + 1.0) * 0.5 * (feat.S - 1))));
+      return feat.img[(iy * feat.S + ix) * 4] / 255;
+    };
+
+    const particles = []; // { x, y, z, lum, size, phase, colX, kind }
+    const eps = 0.012;
+    const Lkey = [0.10, 0.16, 0.98];
+    const Lfill = [-0.38, -0.12, 0.92];
+    const hash = (a, b) => {
+      const s = Math.sin(a * 127.1 + b * 311.7) * 43758.5453;
+      return s - Math.floor(s);
+    };
+
+    // Layer 1: High-Definition 3D Floating Guy Fawkes Binary Cloud (~1,850 crisp floating `1` & `0` particles)
+    const COLS = 47, ROWS = 55;
+    for (let r = 0; r < ROWS; r++) {
+      const v = (r / (ROWS - 1)) * 1.94 - 0.97;
+      const hw = maskBoundary(0, v);
+      const rowShift = (r % 2) * 0.010;
+      for (let c = 0; c < COLS; c++) {
+        const uRaw = (c / (COLS - 1)) * 1.84 - 0.92 + rowShift;
+        if (Math.abs(uRaw) > hw * 0.99) continue;
+
+        // Sleek hollow Guy Fawkes almond eye cutouts (kept empty for voice-reactive glowing eyes)
+        const es = eyeSlitSdf(uRaw, v);
+        if (es < 0.008) continue;
+
+        // Carved negative-space eyebrows, handlebar mustache, smile crease, goatee
+        const fv = readFeat(uRaw, v);
+        if (fv < 0.38) continue;
+
+        const jx = (hash(c, r) - 0.5) * 0.010;
+        const jy = (hash(r + 17, c + 3) - 0.5) * 0.009;
+        const u = uRaw + jx;
+        const vv = v + jy;
+        const rn = Math.min(1.0, Math.abs(u) / Math.max(0.06, maskBoundary(0, vv)));
+
+        const x = u * 1.04;
+        const y = -vv * 1.14;
+        const z = maskHeight(u, vv);
+
+        // Real 3D analytical normal with balanced frontal wrap lighting (matches image.png clarity!)
+        const dzdu = (maskHeight(u + eps, vv) - maskHeight(u - eps, vv)) / (2 * eps);
+        const dzdv = (maskHeight(u, vv + eps) - maskHeight(u, vv - eps)) / (2 * eps);
+        let nx = -dzdu / 1.04, ny = dzdv / 1.14, nz = 1.0;
+        const nlen = Math.hypot(nx, ny, nz) || 1.0;
+        nx /= nlen; ny /= nlen; nz /= nlen;
+
+        const wrapKey = Math.max(0, (nx * Lkey[0] + ny * Lkey[1] + nz * Lkey[2] + 0.42) / 1.42);
+        const diffFill = Math.max(0, nx * Lfill[0] + ny * Lfill[1] + nz * Lfill[2]);
+        // Soft outer vignette like reference image.png while keeping upper lids, cheeks, nose & chin crisp!
+        const edgeFade = 1.0 - smoothstep(0.76, 1.05, rn);
+        const topBotFade = (1.0 - smoothstep(0.84, 1.04, Math.abs(vv))) * 0.35 + 0.65;
+        const lum = Math.max(0.22, Math.min(1.0,
+          (0.26 + 0.58 * wrapKey + 0.22 * diffFill) * (0.36 + 0.64 * edgeFade) * topBotFade * fv
+        ));
+
+        if (rn > 0.89 && hash(c * 3, r * 5) > edgeFade + 0.42) continue;
+
+        const size = 0.84 + 0.34 * lum + hash(c + 5, r + 9) * 0.14;
+        particles.push({
+          x, y, z,
+          lum,
+          size,
+          phase: hash(c * 7 + 1, r * 11 + 2) * TAU,
+          colX: c,
+          rowY: r,
+          kind: 0
+        });
+
+        // Layer 2: Volumetric Inner-Depth Parallax `1` & `0` Particles (tight depth offset for crisp 3D volume)
+        if (((c + r) % 3 === 0) && rn < 0.82 && lum > 0.38 && es > 0.04) {
+          particles.push({
+            x: x * 0.97,
+            y: y * 0.97,
+            z: z - 0.12 - hash(c + 31, r + 41) * 0.08,
+            lum: lum * 0.34,
+            size: size * 0.72,
+            phase: hash(c * 13 + 9, r * 5 + 3) * TAU,
+            colX: c,
+            rowY: r,
+            kind: 0
+          });
+        }
+      }
+    }
+
+    // Layer 3: Assimilis-Style Murmuration Scout `1` & `0` Swarm (~400 drifting particles around the mask)
+    const SCOUTS = 400;
+    const ga = Math.PI * (3 - Math.sqrt(5));
+    for (let i = 0; i < SCOUTS; i++) {
+      const yy = 1 - (2 * (i + 0.5)) / SCOUTS;
+      const rr = Math.sqrt(Math.max(0, 1 - yy * yy));
+      const a = ga * i;
+      const rad = 1.24 + (i % 19) * 0.045;
+      particles.push({
+        x: Math.cos(a) * rr * rad,
+        y: yy * rad * 1.05,
+        z: Math.sin(a) * rr * rad * 0.85,
+        lum: 0.22 + (i % 7) * 0.055,
+        size: 0.62 + (i % 5) * 0.10,
+        phase: a % TAU,
+        colX: i % 46,
+        rowY: i % 46,
+        kind: 1
+      });
+    }
+
+    // Layer 4: Voice-Reactive Sculpted Almond 3D Eye Cores (34 precision particles per eye!)
+    // Dormant dark embers when silent -> blazing crimson-red almond eyes with ruby-white iris when Fish/Voice Studio speaks!
+    [-1, 1].forEach((side) => {
+      const cxU = side * 0.345;
+      for (let k = 0; k < 34; k++) {
+        const s = (k / 33) * 2.0 - 1.0; // -1..+1 across almond eye width
+        const ex = s * 0.82;
+        const archV = -0.168 + ex * ex * 0.034 - ex * 0.010;
+        const vertOff = ((k % 3) - 1) * 0.011 * Math.max(0.15, 1.0 - ex * ex);
+        const u = cxU + ex * 0.145;
+        const v = archV + vertOff;
+        const baseZ = maskHeight(u, v) - 0.025;
+        const pupilW = Math.exp(-(ex * ex) * 3.8); // concentrated bright iris in center, fiery crimson along almond corners
+        particles.push({
+          x: u * 1.04,
+          y: -v * 1.14,
+          z: baseZ + pupilW * 0.03,
+          lum: 0.28 + 0.72 * pupilW,
+          size: 0.72 + 0.95 * pupilW,
+          phase: (k * 0.43) % TAU,
+          colX: side < 0 ? 12 : 34,
+          rowY: 18,
+          kind: 2
+        });
+      }
+    });
+
+    return particles;
+  }
+
+  // Optional custom .OBJ parser -> samples floating 3D `1` & `0` particles onto any uploaded 3D mesh!
+  function parseObjToParticles(text) {
+    const rawV = [];
     const lines = String(text || '').split(/\r?\n/);
     for (let i = 0; i < lines.length; i++) {
       const ln = lines[i].trim();
       if (ln.startsWith('v ')) {
         const p = ln.split(/\s+/);
         rawV.push([parseFloat(p[1]) || 0, parseFloat(p[2]) || 0, parseFloat(p[3]) || 0]);
-      } else if (ln.startsWith('vn ')) {
-        const p = ln.split(/\s+/);
-        rawN.push([parseFloat(p[1]) || 0, parseFloat(p[2]) || 0, parseFloat(p[3]) || 1]);
-      } else if (ln.startsWith('vt ')) {
-        const p = ln.split(/\s+/);
-        rawT.push([parseFloat(p[1]) || 0, 1.0 - (parseFloat(p[2]) || 0)]);
-      } else if (ln.startsWith('f ')) {
-        const parts = ln.split(/\s+/).slice(1);
-        const faceIdx = [];
-        for (let k = 0; k < parts.length; k++) {
-          const seg = parts[k].split('/');
-          const vi = parseInt(seg[0], 10);
-          const ti = seg[1] ? parseInt(seg[1], 10) : 0;
-          const ni = seg[2] ? parseInt(seg[2], 10) : 0;
-          const v = rawV[vi > 0 ? vi - 1 : rawV.length + vi] || [0, 0, 0];
-          const t = ti ? (rawT[ti > 0 ? ti - 1 : rawT.length + ti] || [0.5, 0.5]) : [0.5, 0.5];
-          const n = ni ? (rawN[ni > 0 ? ni - 1 : rawN.length + ni] || [0, 0, 1]) : [0, 0, 1];
-          faceIdx.push(pos.length / 3);
-          pos.push(v[0], v[1], v[2]);
-          uv.push(t[0], t[1]);
-          norm.push(n[0], n[1], n[2]);
-        }
-        for (let k = 1; k + 1 < faceIdx.length; k++) idx.push(faceIdx[0], faceIdx[k], faceIdx[k + 1]);
       }
     }
-    if (!pos.length) return null;
+    if (rawV.length < 20) return null;
     let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9, minZ = 1e9, maxZ = -1e9;
-    for (let i = 0; i < pos.length; i += 3) {
-      minX = Math.min(minX, pos[i]); maxX = Math.max(maxX, pos[i]);
-      minY = Math.min(minY, pos[i + 1]); maxY = Math.max(maxY, pos[i + 1]);
-      minZ = Math.min(minZ, pos[i + 2]); maxZ = Math.max(maxZ, pos[i + 2]);
+    for (let i = 0; i < rawV.length; i++) {
+      const v = rawV[i];
+      if (v[0] < minX) minX = v[0]; if (v[0] > maxX) maxX = v[0];
+      if (v[1] < minY) minY = v[1]; if (v[1] > maxY) maxY = v[1];
+      if (v[2] < minZ) minZ = v[2]; if (v[2] > maxZ) maxZ = v[2];
     }
     const cx = (minX + maxX) * 0.5, cy = (minY + maxY) * 0.5, cz = (minZ + maxZ) * 0.5;
-    const sc = 2.1 / Math.max(0.001, maxX - minX, maxY - minY, maxZ - minZ);
-    for (let i = 0; i < pos.length; i += 3) {
-      pos[i] = (pos[i] - cx) * sc;
-      pos[i + 1] = (pos[i + 1] - cy) * sc;
-      pos[i + 2] = (pos[i + 2] - cz) * sc;
+    const sc = 2.05 / Math.max(0.001, maxX - minX, maxY - minY, maxZ - minZ);
+    const step = Math.max(1, Math.floor(rawV.length / 2000));
+    const pts = [];
+    for (let i = 0; i < rawV.length; i += step) {
+      const v = rawV[i];
+      const x = (v[0] - cx) * sc, y = (v[1] - cy) * sc, z = (v[2] - cz) * sc;
+      pts.push({ x, y, z, lum: Math.max(0.25, Math.min(1.0, 0.55 + z * 0.45)), size: 1.0, phase: (i * 0.73) % TAU, colX: Math.floor((x + 1.2) * 16), rowY: Math.floor((1.2 - y) * 16), kind: 0 });
     }
-    return {
-      positions: new Float32Array(pos),
-      normals: new Float32Array(norm),
-      uvs: new Float32Array(uv),
-      indices: new Uint32Array(idx)
-    };
+    return pts;
   }
-
-  const MASK_VS = `#version 300 es
-  precision highp float;
-  layout(location = 0) in vec3 aPos;
-  layout(location = 1) in vec3 aNorm;
-  layout(location = 2) in vec2 aUv;
-
-  uniform vec2 uRes;
-  uniform float uYaw;
-  uniform float uPitch;
-  uniform float uZoom;
-  uniform float uBob;
-  uniform float uGlitch;
-
-  out vec3 vNormal;
-  out vec3 vViewPos;
-  out vec2 vUv;
-  out vec3 vLocal;
-
-  void main() {
-    float cy = cos(uYaw), sy = sin(uYaw);
-    float cp = cos(uPitch), sp = sin(uPitch);
-    vec3 p = aPos + vec3(0.0, uBob, 0.0);
-    vec3 p1 = vec3(p.x * cy - p.z * sy, p.y, p.x * sy + p.z * cy);
-    vec3 p2 = vec3(p1.x, p1.y * cp - p1.z * sp, p1.y * sp + p1.z * cp);
-
-    vec3 n1 = vec3(aNorm.x * cy - aNorm.z * sy, aNorm.y, aNorm.x * sy + aNorm.z * cy);
-    vec3 n2 = vec3(n1.x, n1.y * cp - n1.z * sp, n1.y * sp + n1.z * cp);
-
-    float camDist = 3.95;
-    float zCam = camDist - p2.z;
-    float aspect = uRes.x / max(1.0, uRes.y);
-    float f = 2.42 * uZoom;
-    vec2 ndc = vec2(p2.x * f / (zCam * aspect), p2.y * f / zCam);
-    float ndcZ = clamp((zCam - 1.2) / 5.5 * 2.0 - 1.0, -0.99, 0.99);
-
-    gl_Position = vec4(ndc, ndcZ, 1.0);
-    vNormal = normalize(n2);
-    vViewPos = vec3(p2.x, p2.y, -zCam);
-    vUv = aUv;
-    vLocal = aPos;
-  }`;
-
-  const MASK_FS = `#version 300 es
-  precision highp float;
-  in vec3 vNormal;
-  in vec3 vViewPos;
-  in vec2 vUv;
-  in vec3 vLocal;
-
-  uniform sampler2D uTex;
-  uniform sampler2D uGlyphTex;
-  uniform float uTime;
-  uniform int uState; // 0=IDLE, 1=RECON, 2=ALERT, 3=CONTAINED
-  uniform float uCustomMesh;
-  uniform float uRedTheme;
-  out vec4 outColor;
-
-  float hash11(float p) {
-    return fract(sin(p * 127.1 + 311.7) * 43758.5453123);
-  }
-  float hash21(vec2 p) {
-    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-  }
-
-  float eyeSlit(vec2 fuv) {
-    float au = abs(fuv.x);
-    float ex = (au - 0.345) / 0.155;
-    if (abs(ex) >= 1.0) return 0.1;
-    float arch = -0.172 + ex * ex * 0.032 - ex * 0.012;
-    float dy = fuv.y - arch;
-    float topH = 0.052 * max(0.0, 1.0 - ex * ex);
-    float botH = 0.024 * max(0.0, 1.0 - ex * ex);
-    return dy < 0.0 ? (-dy - topH) : (dy - botH);
-  }
-
-  void main() {
-    vec2 fuv = vUv * 2.0 - 1.0;
-    vec3 N = normalize(gl_FrontFacing ? vNormal : -vNormal);
-    vec3 V = normalize(-vViewPos);
-
-    // Theme & State Matrix palette (Red Matrix crimson default; Emerald lock for CONTAINED)
-    vec3 colDeep = vec3(0.55, 0.03, 0.07);
-    vec3 colMid  = vec3(1.00, 0.11, 0.21);
-    vec3 colHot  = vec3(1.00, 0.78, 0.84);
-    if (uState == 2) {
-      colDeep = vec3(0.70, 0.02, 0.06);
-      colMid  = vec3(1.00, 0.08, 0.16);
-      colHot  = vec3(1.00, 0.90, 0.85);
-    } else if (uState == 3) {
-      colDeep = vec3(0.04, 0.40, 0.26);
-      colMid  = vec3(0.08, 0.92, 0.62);
-      colHot  = vec3(0.84, 1.00, 0.94);
-    } else if (uRedTheme < 0.5) {
-      colDeep = vec3(0.02, 0.36, 0.55);
-      colMid  = vec3(0.06, 0.80, 0.98);
-      colHot  = vec3(0.82, 0.98, 1.00);
-    }
-
-    // Hollow pierced eye cutouts with fierce glowing cyber core inside the socket
-    if (uCustomMesh < 0.5) {
-      float es = eyeSlit(fuv);
-      if (es < 0.0) {
-        float px = (abs(fuv.x) - 0.345) / 0.052;
-        float py = (fuv.y + 0.178) / 0.026;
-        float pupil = exp(-(px * px + py * py) * 2.6);
-        float iris  = exp(-(px * px + py * py) * 0.85);
-        float pulse = 0.78 + 0.22 * sin(uTime * 3.8);
-        vec3 eyeCol = vec3(0.012, 0.002, 0.004)
-          + colMid * (0.28 * iris + 0.95 * pupil) * pulse
-          + colHot * (0.65 * pow(pupil, 2.0)) * pulse;
-        outColor = vec4(eyeCol, 0.98);
-        return;
-      }
-      if (es < 0.014) {
-        float rimT = smoothstep(0.014, 0.0, es);
-        outColor = vec4(mix(vec3(0.03, 0.004, 0.008), colMid * 0.72, rimT), 0.98);
-        return;
-      }
-    }
-
-    // Feature & AO map: 1.0 = face surface, 0.0 = carved eyebrows / mustache / smile / goatee
-    float featSample = uCustomMesh > 0.5 ? 1.0 : texture(uTex, vUv).r;
-    float carvedVoid = 1.0 - smoothstep(0.16, 0.44, featSample);
-    float ao = mix(0.32, 1.0, smoothstep(0.22, 0.95, featSample));
-
-    // Real 3D surface lighting (sculpts forehead, cheekbones, nose bridge, lips & chin in 3D!)
-    vec3 Lkey  = normalize(vec3(0.24, 0.46, 0.86));
-    vec3 Lfill = normalize(vec3(-0.55, 0.18, 0.78));
-    float diffKey  = max(dot(N, Lkey), 0.0);
-    float diffFill = max(dot(N, Lfill), 0.0);
-    float wrapDiff = max((dot(N, Lkey) + 0.22) / 1.22, 0.0);
-
-    vec3 H = normalize(Lkey + V);
-    float spec = pow(max(dot(N, H), 0.0), 28.0);
-    float fresnel = pow(1.0 - max(dot(N, V), 0.0), 2.35);
-    float outerRim = uCustomMesh > 0.5 ? 1.0 : smoothstep(0.42, 0.94, length(fuv * vec2(1.06, 0.88)));
-
-    // 3D Binary Matrix Grid mapped cleanly onto the 3D mask coordinates
-    vec2 mUv = uCustomMesh > 0.5 ? (vLocal.xy * 0.48 + 0.5) : vUv;
-    vec2 grid = vec2(30.0, 34.0);
-    vec2 cell = floor(mUv * grid);
-    vec2 local = fract(mUv * grid);
-
-    // Downward cascading Matrix streams per column across the 3D face
-    float colHash = hash11(cell.x * 13.7 + 1.9);
-    float spdMult = (uState == 2) ? 1.75 : 1.0;
-    float colSpeed = (2.4 + fract(colHash * 7.31) * 3.6) * spdMult;
-    float headPos = colHash * 24.0 + uTime * colSpeed;
-    float period = 16.0;
-    float trail = 1.0 - fract((headPos - cell.y) / period);
-    float streamGlow = smoothstep(0.25, 0.96, trail);
-    float isLead = smoothstep(0.92, 0.992, trail);
-
-    // Dynamic flipping 0 / 1 bit per 3D surface cell
-    float flipTick = floor(uTime * (1.8 + fract(colHash * 11.7) * 2.6) + hash21(cell) * 19.0);
-    float bit = step(0.5, hash21(cell + vec2(0.0, flipTick * 0.73)));
-
-    // Sample dual-channel crisp 0/1 glyph atlas with continuous derivatives (zero cell-border mipmap seams!)
-    vec2 padUv = clamp(local, 0.04, 0.96);
-    vec2 guv = vec2((bit + padUv.x) * 0.5, padUv.y);
-    vec2 gdx = dFdx(mUv * grid) * vec2(0.5, 1.0);
-    vec2 gdy = dFdy(mUv * grid) * vec2(0.5, 1.0);
-    vec2 glyph = textureGrad(uGlyphTex, guv, gdx, gdy).rg;
-    float stroke = glyph.r;
-    float halo   = glyph.g;
-
-    // 3D sculpted luminance drives how brightly each 1 and 0 burns across the 3D face!
-    float sculpt3D = (0.14 + 0.68 * wrapDiff + 0.22 * diffFill + 0.36 * pow(diffKey, 1.5)) * ao;
-    float rimBoost = fresnel * mix(0.25, 1.0, outerRim);
-    float intensity = sculpt3D * (0.58 + 0.62 * streamGlow) + spec * 0.55 + rimBoost * 0.92;
-
-    // Color ramp: deep blood-ruby in shadowed contours -> blazing scarlet -> incandescent white-pink on peaks/leads
-    vec3 digitCol = mix(colDeep, colMid, clamp(intensity * 0.95, 0.0, 1.0));
-    float hotAmt = clamp(isLead * 0.78 + spec * 0.68 + smoothstep(0.95, 1.55, intensity) * 0.65, 0.0, 1.0);
-    digitCol = mix(digitCol, colHot, hotAmt);
-
-    // Dark obsidian holographic substrate between digits (prevents visual soup & frames 3D silhouette)
-    vec3 baseShell = vec3(0.020, 0.003, 0.006)
-      + colDeep * (0.09 * sculpt3D + 0.26 * rimBoost)
-      + colMid  * (0.28 * pow(rimBoost, 1.5));
-
-    // Composite crisp glowing 1/0 digits + neon bloom halo over sculpted dark hologram shell
-    vec3 binaryFace = baseShell
-      + digitCol * halo * (0.42 * intensity)
-      + digitCol * stroke * (1.28 * max(0.32, intensity));
-
-    // Carve iconic Guy Fawkes eyebrows, curled handlebar mustache, smile & pointed goatee in pure dark void
-    vec3 carvedCol = vec3(0.008, 0.001, 0.002) + colDeep * (0.04 * rimBoost);
-    vec3 col = mix(binaryFace, carvedCol, carvedVoid);
-
-    // Subtle hologram scanline shimmer
-    col *= (0.96 + 0.04 * sin(vLocal.y * 140.0 - uTime * 3.5));
-
-    // RECON sweeping laser scan across the 3D binary face
-    if (uState == 1) {
-      float beamY = sin(uTime * 1.9) * 1.05;
-      float beam = exp(-pow((vLocal.y - beamY) / 0.075, 2.0));
-      col += mix(colMid, colHot, stroke) * beam * (0.45 + 0.95 * stroke) * (1.0 - carvedVoid * 0.75);
-    }
-    // ALERT crimson edge pulse
-    if (uState == 2) {
-      float pulse = 0.5 + 0.5 * sin(uTime * 6.0);
-      col += colMid * (rimBoost * 0.85 * pulse + stroke * 0.14 * pulse) * (1.0 - carvedVoid);
-    }
-
-    if (!gl_FrontFacing) {
-      col = vec3(0.02, 0.003, 0.006) + colDeep * (0.25 + 0.4 * stroke) * fresnel;
-    }
-
-    // Solid-yet-holographic alpha (crisp digits at 0.99, obsidian shell at 0.90)
-    float alpha = mix(0.90, 0.99, clamp(stroke + rimBoost * 0.8 + carvedVoid * 0.6, 0.0, 1.0));
-    outColor = vec4(col, alpha);
-  }`;
 
   const PT_VS = `#version 300 es
   precision highp float;
+  precision highp int;
   layout(location = 0) in vec3 aPos;
-  layout(location = 1) in float aPhase;
+  layout(location = 1) in vec4 aMeta; // x=lum, y=phase, z=size, w=kind (0=face, 1=scout, 2=eye)
+  layout(location = 2) in vec2 aGrid; // x=colX, y=rowY
+
   uniform vec2 uRes;
   uniform float uTime;
-  uniform float uYaw;
   uniform float uZoom;
   uniform float uDpr;
-  out float vAlpha;
-  out float vTone;
+  uniform float uSpeech;
+  uniform int uState; // 0=IDLE, 1=RECON, 2=ALERT, 3=CONTAINED
+
+  out float vLum;
+  out float vBit;
+  out float vHot;
+  out float vKind;
+  out float vScan;
+
+  float hash11(float p) { return fract(sin(p * 127.1 + 311.7) * 43758.5453123); }
+
   void main() {
-    float a = aPhase + uTime * (0.14 + mod(aPhase, 0.25));
-    float r = length(aPos.xz);
-    vec3 p = vec3(cos(a) * r, aPos.y + sin(uTime * 0.9 + aPhase * 3.0) * 0.06, sin(a) * r);
-    float cy = cos(uYaw * 0.5), sy = sin(uYaw * 0.5);
-    vec3 p1 = vec3(p.x * cy - p.z * sy, p.y, p.x * sy + p.z * cy);
-    float zCam = 4.2 - p1.z;
+    float zCam = 3.85 - aPos.z;
     float aspect = uRes.x / max(1.0, uRes.y);
-    float f = 2.25 * uZoom;
-    gl_Position = vec4(p1.x * f / (zCam * aspect), p1.y * f / zCam, clamp((zCam - 1.2) / 6.0 * 2.0 - 1.0, -0.99, 0.99), 1.0);
-    gl_PointSize = clamp((2.6 + mod(aPhase * 7.0, 2.8)) * uDpr * (3.6 / zCam), 1.5, 9.0);
-    vAlpha = clamp(0.28 + 0.45 * (1.0 - (zCam - 2.2) / 3.5), 0.12, 0.85);
-    vTone = step(0.72, fract(aPhase * 1.618));
+    float f = 2.40 * uZoom;
+    vec2 ndc = vec2(aPos.x * f / (zCam * aspect), aPos.y * f / zCam);
+    float ndcZ = clamp((zCam - 1.0) / 6.0 * 2.0 - 1.0, -0.99, 0.99);
+    gl_Position = vec4(ndc, ndcZ, 1.0);
+
+    float kind = aMeta.w;
+    vKind = kind;
+    float depthScale = clamp(3.85 / max(1.2, zCam), 0.55, 1.85);
+    float stageScale = clamp(min(uRes.x, uRes.y) / 680.0, 0.48, 1.35);
+
+    if (kind > 1.5) {
+      // Voice-reactive crimson almond eyes (stealthy dark ember silent -> blazing crimson-red iris speaking!)
+      float alertBase = (uState == 2) ? 0.36 : 0.04;
+      float eyePower = max(alertBase, 0.04 + uSpeech * 0.96);
+      float eyeExpand = 0.85 + uSpeech * 0.58 + (uState == 2 ? 0.16 : 0.0);
+      gl_PointSize = clamp(aMeta.z * 9.5 * eyeExpand * depthScale * stageScale * uDpr, 2.0, 26.0 * uDpr);
+      vLum = aMeta.x * eyePower;
+      vHot = clamp(pow(aMeta.x, 2.2) * uSpeech * 0.72, 0.0, 0.78);
+      vBit = 0.0;
+      vScan = 0.0;
+      return;
+    }
+
+    // Dynamic cascading Matrix column glow + live 0/1 bit flipping per particle
+    float colH = hash11(aGrid.x * 13.7 + 1.9);
+    float spd = (2.1 + fract(colH * 7.31) * 3.4) * (uState == 2 ? 1.7 : 1.0);
+    float headPos = colH * 28.0 + uTime * spd;
+    float trail = 1.0 - fract((headPos - aGrid.y) / 22.0);
+    float streamBoost = smoothstep(0.28, 0.96, trail);
+    float isLead = smoothstep(0.92, 0.992, trail);
+
+    float flip = floor(uTime * (1.4 + fract(colH * 11.3) * 2.2) + aMeta.y * 5.0);
+    vBit = step(0.5, hash11(aMeta.y * 53.7 + flip * 1.37));
+
+    // Crimson eye light spill onto adjacent 1/0 face particles when speaking via Fish / Voice Studio!
+    float dEyeL = length(aPos.xy - vec2(-0.36, 0.19));
+    float dEyeR = length(aPos.xy - vec2( 0.36, 0.19));
+    float eyeSpill = exp(-min(dEyeL, dEyeR) * 5.2) * uSpeech * 0.65;
+
+    float scanBeam = 0.0;
+    if (uState == 1) {
+      float beamY = sin(uTime * 1.9) * 1.08;
+      scanBeam = exp(-pow((aPos.y - beamY) / 0.085, 2.0));
+    }
+    vScan = scanBeam;
+
+    float basePx = (kind > 0.5) ? 9.5 : 11.4;
+    gl_PointSize = clamp(aMeta.z * basePx * depthScale * stageScale * uDpr * (1.0 + isLead * 0.14 + scanBeam * 0.22), 2.8, 28.0 * uDpr);
+
+    float depthFade = clamp(1.18 - (zCam - 3.1) * 0.35, 0.28, 1.25);
+    vLum = aMeta.x * depthFade * (0.64 + 0.54 * streamBoost) + eyeSpill + scanBeam * 0.72;
+    vHot = clamp(isLead * 0.72 + smoothstep(0.96, 1.48, vLum) * 0.50 + eyeSpill * 0.5 + scanBeam * 0.80, 0.0, 0.92);
   }`;
 
   const PT_FS = `#version 300 es
-  precision mediump float;
-  in float vAlpha;
-  in float vTone;
-  uniform vec3 uC1;
-  uniform vec3 uC2;
+  precision highp float;
+  precision highp int;
+  in float vLum;
+  in float vBit;
+  in float vHot;
+  in float vKind;
+  in float vScan;
+
+  uniform sampler2D uGlyphTex;
+  uniform float uRedTheme;
+  uniform int uState;
   out vec4 outColor;
+
   void main() {
-    vec2 p = gl_PointCoord * 2.0 - 1.0;
-    float r2 = dot(p, p);
-    if (r2 > 1.0) discard;
-    float glow = exp(-r2 * 4.2);
-    vec3 rgb = mix(uC1, uC2, vTone);
-    outColor = vec4(mix(rgb, vec3(1.0), glow * 0.35), glow * vAlpha);
+    // Palette: Red Matrix crimson default, Emerald cyber-lock on CONTAINED
+    vec3 colDeep = vec3(0.60, 0.03, 0.08);
+    vec3 colMid  = vec3(1.00, 0.10, 0.20);
+    vec3 colHot  = vec3(1.00, 0.80, 0.86);
+    if (uState == 2) {
+      colDeep = vec3(0.76, 0.02, 0.06);
+      colMid  = vec3(1.00, 0.07, 0.15);
+      colHot  = vec3(1.00, 0.88, 0.82);
+    } else if (uState == 3) {
+      colDeep = vec3(0.05, 0.45, 0.30);
+      colMid  = vec3(0.09, 0.94, 0.64);
+      colHot  = vec3(0.86, 1.00, 0.95);
+    } else if (uRedTheme < 0.5) {
+      colDeep = vec3(0.03, 0.40, 0.62);
+      colMid  = vec3(0.08, 0.82, 1.00);
+      colHot  = vec3(0.84, 0.98, 1.00);
+    }
+
+    if (vKind > 1.5) {
+      // Sculpted glowing crimson almond eye plasma (fierce neon crimson with ruby-white iris!)
+      vec2 p = gl_PointCoord * 2.0 - 1.0;
+      float r2 = dot(p, p);
+      if (r2 > 1.0) discard;
+      float core = exp(-r2 * 4.6);
+      float aura = exp(-r2 * 1.9);
+      vec3 rgb = mix(colMid, colHot, clamp(core * vHot * 0.95, 0.0, 0.85));
+      float a = clamp((aura * 0.26 + core * 0.46) * vLum, 0.0, 0.72);
+      outColor = vec4(rgb * (1.05 + 0.75 * vLum), a);
+      return;
+    }
+
+    // Crisp floating 1 & 0 sprite sampled directly from our dual-channel glyph atlas
+    vec2 uv = clamp(gl_PointCoord, 0.03, 0.97);
+    vec2 guv = vec2((vBit + uv.x) * 0.5, uv.y);
+    vec2 g = texture(uGlyphTex, guv).rg;
+    float stroke = g.r;
+    float halo = g.g;
+    if (stroke < 0.02 && halo < 0.03) discard;
+
+    vec3 rgb = mix(colDeep, colMid, clamp(vLum * 0.95, 0.0, 1.0));
+    rgb = mix(rgb, colHot, vHot);
+    float energy = (stroke * 1.10 + halo * 0.34) * clamp(vLum, 0.10, 1.55);
+    float alpha = clamp((stroke * 0.92 + halo * 0.30) * clamp(vLum, 0.14, 0.96), 0.0, 0.92);
+    outColor = vec4(rgb * (0.72 + 0.70 * energy), alpha);
   }`;
 
   function compile(gl, type, src) {
@@ -588,6 +521,7 @@
     gl.shaderSource(sh, src);
     gl.compileShader(sh);
     if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+      console.warn('ChappaMask shader error:', gl.getShaderInfoLog(sh));
       gl.deleteShader(sh);
       return null;
     }
@@ -599,83 +533,108 @@
     const fs = compile(gl, gl.FRAGMENT_SHADER, fsSrc);
     if (!vs || !fs) return null;
     const p = gl.createProgram();
-    gl.attachShader(p, vs);
-    gl.attachShader(p, fs);
-    gl.linkProgram(p);
-    gl.deleteShader(vs);
-    gl.deleteShader(fs);
-    return gl.getProgramParameter(p, gl.LINK_STATUS) ? p : null;
+    gl.attachShader(p, vs); gl.attachShader(p, fs); gl.linkProgram(p);
+    gl.deleteShader(vs); gl.deleteShader(fs);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+      console.warn('ChappaMask link error:', gl.getProgramInfoLog(p));
+      return null;
+    }
+    return p;
   }
 
   function createMaskStage(canvas, opts) {
     const o = opts || {};
     const gl = canvas.getContext('webgl2', { alpha: true, antialias: true, depth: true, premultipliedAlpha: false });
     let W = 1, H = 1, DPR = 1;
-    let yaw = 0.24, pitch = -0.05, zoom = o.zoom || 1.04;
+    let yaw = 0.20, pitch = -0.04, zoom = o.zoom || 1.05;
     let dragging = false, lx = 0, ly = 0, t = 0, lastDraw = 0;
     let alive = true, rafId = 0;
     let state = String(o.state || 'IDLE').toUpperCase();
     let fps = Number(o.fps || 60);
     let redTheme = o.theme !== 'agentsar';
-    let customMeshFlag = 0.0;
 
-    // Optional 2D overlay canvas for precision HUD rings + background canvas for Red Matrix 1/0 rain
-    let hudCanvas = o.hudCanvas || null;
-    let hudCtx = hudCanvas ? hudCanvas.getContext('2d') : null;
-    let matrixCanvas = o.matrixCanvas || null;
-    let matrixCtx = matrixCanvas ? matrixCanvas.getContext('2d') : null;
-    let matrixDrops = [];
-    let matrixCols = 0;
+    // Pointer state for Assimilis-style particle parting & vortex swirl
+    let mouseIn = false, pmx = 0, pmy = 0, pmvx = 0, pmvy = 0;
 
-    let progMask = null, progPt = null, vaoMask = null, vaoPt = null, texMask = null, texGlyph = null;
-    let indexCount = 0;
-    let ptCount = 1400;
+    // Live Voice-Reactive Eye Glow state (driven by Assimilis Fish Audio / Voice Studio AnalyserNode)
+    let targetSpeech = 0.0;
+    let smoothSpeech = 0.0;
+    let speakingFlag = false;
 
-    function uploadMesh(mesh, isCustom) {
-      if (!gl || !progMask || !mesh) return;
-      customMeshFlag = isCustom ? 1.0 : 0.0;
-      if (vaoMask) gl.deleteVertexArray(vaoMask);
-      vaoMask = gl.createVertexArray();
-      gl.bindVertexArray(vaoMask);
+    const hudCanvas = o.hudCanvas || null;
+    const hudCtx = hudCanvas ? hudCanvas.getContext('2d') : null;
+    const matrixCanvas = o.matrixCanvas || null;
+    const matrixCtx = matrixCanvas ? matrixCanvas.getContext('2d') : null;
+    let matrixDrops = [], matrixCols = 0;
 
-      const bPos = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, bPos);
-      gl.bufferData(gl.ARRAY_BUFFER, mesh.positions, gl.STATIC_DRAW);
-      gl.enableVertexAttribArray(0);
-      gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    // Assimilis Holo Particle Physics TypedArrays
+    let N = 0;
+    let hx, hy, hz, px, py, pz, vx, vy, vz;
+    let posInterleaved, metaBufData, gridBufData;
+    let pKind, pPhase;
+    let progPt = null, vaoPt = null, bPos = null, bMeta = null, bGrid = null, texGlyph = null;
 
-      const bNorm = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, bNorm);
-      gl.bufferData(gl.ARRAY_BUFFER, mesh.normals, gl.STATIC_DRAW);
-      gl.enableVertexAttribArray(1);
-      gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+    function loadParticleCloud(list, keepPositions) {
+      N = list.length;
+      const oldPx = keepPositions && px ? px : null;
+      const oldPy = keepPositions && py ? py : null;
+      const oldPz = keepPositions && pz ? pz : null;
+      hx = new Float32Array(N); hy = new Float32Array(N); hz = new Float32Array(N);
+      px = new Float32Array(N); py = new Float32Array(N); pz = new Float32Array(N);
+      vx = new Float32Array(N); vy = new Float32Array(N); vz = new Float32Array(N);
+      pKind = new Uint8Array(N);
+      pPhase = new Float32Array(N);
+      posInterleaved = new Float32Array(N * 3);
+      metaBufData = new Float32Array(N * 4);
+      gridBufData = new Float32Array(N * 2);
 
-      const bUv = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, bUv);
-      gl.bufferData(gl.ARRAY_BUFFER, mesh.uvs, gl.STATIC_DRAW);
-      gl.enableVertexAttribArray(2);
-      gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 0, 0);
+      for (let i = 0; i < N; i++) {
+        const pt = list[i];
+        hx[i] = pt.x; hy[i] = pt.y; hz[i] = pt.z;
+        if (oldPx && i < oldPx.length) {
+          px[i] = oldPx[i]; py[i] = oldPy[i]; pz[i] = oldPz[i];
+        } else {
+          // Spawn softly at rotated home pose so first frame is crisp and immediate
+          const cy = Math.cos(yaw), sy = Math.sin(yaw);
+          px[i] = pt.x * cy - pt.z * sy;
+          py[i] = pt.y;
+          pz[i] = pt.x * sy + pt.z * cy;
+        }
+        pKind[i] = pt.kind | 0;
+        pPhase[i] = pt.phase || 0;
+        metaBufData[i * 4] = pt.lum;
+        metaBufData[i * 4 + 1] = pt.phase || 0;
+        metaBufData[i * 4 + 2] = pt.size || 1.0;
+        metaBufData[i * 4 + 3] = pt.kind | 0;
+        gridBufData[i * 2] = pt.colX || 0;
+        gridBufData[i * 2 + 1] = pt.rowY || 0;
+      }
 
-      const bIdx = gl.createBuffer();
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bIdx);
-      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.STATIC_DRAW);
-      indexCount = mesh.indices.length;
-      gl.bindVertexArray(null);
+      if (gl && vaoPt) {
+        gl.bindVertexArray(vaoPt);
+        gl.bindBuffer(gl.ARRAY_BUFFER, bPos);
+        gl.bufferData(gl.ARRAY_BUFFER, posInterleaved, gl.DYNAMIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, bMeta);
+        gl.bufferData(gl.ARRAY_BUFFER, metaBufData, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, bGrid);
+        gl.bufferData(gl.ARRAY_BUFFER, gridBufData, gl.STATIC_DRAW);
+        gl.bindVertexArray(null);
+      }
+    }
+
+    function swirlImpulse(strength) {
+      const s = strength || 0.55;
+      const dir = (Math.random() < 0.5 ? 1 : -1) * s;
+      for (let i = 0; i < N; i++) {
+        if (pKind[i] === 2) continue;
+        vx[i] += -py[i] * dir + Math.cos(pPhase[i] * 3.0) * 0.25 * s;
+        vy[i] += px[i] * dir + Math.sin(pPhase[i] * 3.0) * 0.25 * s;
+        vz[i] += Math.sin(pPhase[i]) * 0.35 * s;
+      }
     }
 
     if (gl) {
-      progMask = link(gl, MASK_VS, MASK_FS);
       progPt = link(gl, PT_VS, PT_FS);
-
-      const texCanvas = buildMaskTextureCanvas();
-      texMask = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_2D, texMask);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texCanvas);
-      gl.generateMipmap(gl.TEXTURE_2D);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
       const glyphCanvas = buildBinaryGlyphAtlas();
       texGlyph = gl.createTexture();
@@ -687,34 +646,26 @@
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-      uploadMesh(buildHighPolyMaskMesh(), false);
-
-      const ptPos = new Float32Array(ptCount * 3);
-      const ptPh = new Float32Array(ptCount);
-      for (let i = 0; i < ptCount; i++) {
-        const ring = i < ptCount * 0.65;
-        const a = (i * 2.39996) % (Math.PI * 2);
-        const r = ring ? (1.32 + (i % 37) * 0.022) : (0.95 + (i % 29) * 0.045);
-        const y = ring ? (Math.sin(i * 1.7) * 0.52) : ((i % 41) / 41 * 2.5 - 1.25);
-        ptPos[i * 3] = Math.cos(a) * r;
-        ptPos[i * 3 + 1] = y;
-        ptPos[i * 3 + 2] = Math.sin(a) * r;
-        ptPh[i] = a;
-      }
       vaoPt = gl.createVertexArray();
       gl.bindVertexArray(vaoPt);
-      const bPt = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, bPt);
-      gl.bufferData(gl.ARRAY_BUFFER, ptPos, gl.STATIC_DRAW);
+      bPos = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, bPos);
       gl.enableVertexAttribArray(0);
       gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-      const bPh = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, bPh);
-      gl.bufferData(gl.ARRAY_BUFFER, ptPh, gl.STATIC_DRAW);
+
+      bMeta = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, bMeta);
       gl.enableVertexAttribArray(1);
-      gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 0, 0);
+
+      bGrid = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, bGrid);
+      gl.enableVertexAttribArray(2);
+      gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 0, 0);
       gl.bindVertexArray(null);
     }
+
+    loadParticleCloud(buildMaskParticleCloud(), false);
 
     function stateCode() {
       if (state === 'RECON') return 1;
@@ -729,24 +680,21 @@
       W = Math.max(160, Math.round(r.width || canvas.clientWidth || 500));
       H = Math.max(160, Math.round(r.height || canvas.clientHeight || 500));
       const pw = Math.round(W * DPR), ph = Math.round(H * DPR);
-      if (canvas.width !== pw || canvas.height !== ph) {
-        canvas.width = pw; canvas.height = ph;
-      }
-      if (hudCanvas && (hudCanvas.width !== pw || hudCanvas.height !== ph)) {
-        hudCanvas.width = pw; hudCanvas.height = ph;
-      }
+      if (canvas.width !== pw || canvas.height !== ph) { canvas.width = pw; canvas.height = ph; }
+      if (hudCanvas && (hudCanvas.width !== pw || hudCanvas.height !== ph)) { hudCanvas.width = pw; hudCanvas.height = ph; }
       if (matrixCanvas && (matrixCanvas.width !== pw || matrixCanvas.height !== ph)) {
         matrixCanvas.width = pw; matrixCanvas.height = ph;
-        matrixCols = Math.max(22, Math.floor(W / 15));
+        matrixCols = Math.max(20, Math.floor(W / 17));
         matrixDrops = Array.from({ length: matrixCols }, (_, i) => ({
-          y: ((i * 8.7) % (H / 15)),
-          spd: 0.26 + ((i * 13) % 7) * 0.055,
-          len: 13 + (i % 14),
+          y: ((i * 8.7) % (H / 16)),
+          spd: 0.24 + ((i * 13) % 7) * 0.052,
+          len: 12 + (i % 13),
           seed: i * 17 + 3
         }));
       }
     }
 
+    // Subtle background Red Matrix 1/0 rain framing the floating 3D binary mask
     function drawMatrixRain(reduced) {
       if (!matrixCtx) return;
       matrixCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -754,8 +702,8 @@
       if (!redTheme) return;
 
       const cellW = W / Math.max(1, matrixCols);
-      const cellH = 15;
-      matrixCtx.font = '700 13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+      const cellH = 16;
+      matrixCtx.font = '700 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
       matrixCtx.textAlign = 'center';
 
       for (let c = 0; c < matrixCols; c++) {
@@ -765,9 +713,10 @@
           if ((d.y - d.len) * cellH > H + 20) d.y = -Math.random() * 12;
         }
         const x = c * cellW + cellW * 0.5;
-        // Soft center vignette so 1/0 streams frame the 3D Hacker Mask cleanly
+        // Clear quiet center vignette so the floating 3D 1/0 mask stands out cleanly against pure void!
         const distCtr = Math.abs(x - W * 0.5) / (W * 0.5);
-        const colAlpha = 0.36 + 0.64 * Math.min(1, distCtr * 1.18);
+        const colAlpha = 0.06 + 0.72 * Math.pow(Math.min(1, Math.max(0, (distCtr - 0.16) / 0.84)), 1.3);
+        if (colAlpha < 0.08) continue;
 
         const headRow = Math.floor(d.y);
         for (let k = 0; k < d.len; k++) {
@@ -775,22 +724,17 @@
           const y = row * cellH;
           if (y < -cellH || y > H + cellH) continue;
           const bit = ((row * 31 + d.seed + (reduced ? 0 : Math.floor(t * 2))) & 1) ? '1' : '0';
-          const fade = (1 - k / d.len);
+          const fade = 1 - k / d.len;
           if (k === 0) {
-            matrixCtx.shadowColor = '#ff1e38';
-            matrixCtx.shadowBlur = 9;
-            matrixCtx.fillStyle = `rgba(255, 224, 230, ${(0.96 * colAlpha).toFixed(2)})`;
+            matrixCtx.fillStyle = `rgba(255, 196, 208, ${(0.82 * colAlpha).toFixed(2)})`;
           } else if (k < 4) {
-            matrixCtx.shadowBlur = 0;
-            matrixCtx.fillStyle = `rgba(255, 34, 62, ${(0.90 * fade * colAlpha).toFixed(2)})`;
+            matrixCtx.fillStyle = `rgba(255, 34, 62, ${(0.72 * fade * colAlpha).toFixed(2)})`;
           } else {
-            matrixCtx.shadowBlur = 0;
-            matrixCtx.fillStyle = `rgba(218, 16, 40, ${(0.72 * fade * colAlpha).toFixed(2)})`;
+            matrixCtx.fillStyle = `rgba(195, 14, 36, ${(0.52 * fade * colAlpha).toFixed(2)})`;
           }
           matrixCtx.fillText(bit, x, y);
         }
       }
-      matrixCtx.shadowBlur = 0;
     }
 
     function drawHudRings() {
@@ -803,11 +747,12 @@
         ? (state === 'CONTAINED' ? '#10b981' : '#ff243b')
         : (state === 'ALERT' ? '#e81c2e' : (state === 'CONTAINED' ? '#10b981' : '#08b6e8'));
       const c2 = redTheme ? '#ff6b7d' : (state === 'ALERT' ? '#08b6e8' : '#e81c2e');
+      const speechBoost = 1.0 + smoothSpeech * 0.045;
 
       [
-        { r: R * 1.03, w: 1.4, col: c1 + '66', dash: [44, 16, 10, 16], spd: 0.18 },
-        { r: R * 1.15, w: 1.0, col: c2 + '48', dash: [22, 12], spd: -0.12 },
-        { r: R * 1.26, w: 0.85, col: c1 + '33', dash: [6, 10], spd: 0.08 }
+        { r: R * 1.03 * speechBoost, w: 1.35, col: c1 + '58', dash: [44, 16, 10, 16], spd: 0.18 },
+        { r: R * 1.15, w: 1.0, col: c2 + '3c', dash: [22, 12], spd: -0.12 },
+        { r: R * 1.26, w: 0.85, col: c1 + '2a', dash: [6, 10], spd: 0.08 }
       ].forEach((rg, idx) => {
         hudCtx.save();
         hudCtx.translate(cx, cy);
@@ -816,26 +761,142 @@
         hudCtx.lineWidth = rg.w;
         hudCtx.setLineDash(rg.dash);
         hudCtx.beginPath();
-        hudCtx.arc(0, 0, rg.r, 0, Math.PI * 2);
+        hudCtx.arc(0, 0, rg.r, 0, TAU);
         hudCtx.stroke();
         hudCtx.restore();
       });
       hudCtx.setLineDash([]);
+    }
 
-      hudCtx.save();
-      hudCtx.translate(cx, cy);
-      hudCtx.strokeStyle = c1 + '4c';
-      hudCtx.lineWidth = 1;
-      for (let i = 0; i < 36; i++) {
-        const a = (i / 36) * Math.PI * 2 + t * 0.05;
-        const r0 = R * (i % 3 === 0 ? 1.08 : 1.11);
-        const r1 = R * 1.14;
-        hudCtx.beginPath();
-        hudCtx.moveTo(Math.cos(a) * r0, Math.sin(a) * r0);
-        hudCtx.lineTo(Math.cos(a) * r1, Math.sin(a) * r1);
-        hudCtx.stroke();
+    // Assimilis Holo Particle Physics Step: spring-to-3D-mask + curl flow + cursor vortex + voice acoustic wave
+    function stepParticles(dt, reduced) {
+      const cy = Math.cos(yaw), sy = Math.sin(yaw);
+      const cp = Math.cos(pitch), sp = Math.sin(pitch);
+      const bob = reduced ? 0 : Math.sin(t * 1.35) * 0.032;
+
+      // Smooth voice envelope (fast crisp attack on syllables, smooth release)
+      let desiredSpeech = targetSpeech;
+      if (speakingFlag && desiredSpeech < 0.04) {
+        // Natural syllabic modulation fallback when Web Speech API lacks AnalyserNode
+        const syll = 0.52 + 0.34 * Math.sin(t * 14.5) + 0.22 * Math.sin(t * 23.0 + 1.2) + 0.12 * Math.cos(t * 8.2);
+        desiredSpeech = Math.max(0.18, Math.min(1.0, syll));
       }
-      hudCtx.restore();
+      const attack = desiredSpeech > smoothSpeech ? 0.42 : 0.14;
+      smoothSpeech += (desiredSpeech - smoothSpeech) * attack;
+
+      const dragFace = Math.exp(-7.6 * dt);
+      const dragScout = Math.exp(-2.3 * dt);
+      const spgFace = 30.0;
+      const spgEye = 44.0;
+      const hoverRad = 0.46, hoverRad2 = hoverRad * hoverRad;
+      const mvSpd = Math.hypot(pmvx, pmvy);
+      const f1 = 2.0, flowT = t * 0.72;
+
+      for (let i = 0; i < N; i++) {
+        const k = pKind[i];
+        const x0 = hx[i], y0 = hy[i] + bob, z0 = hz[i];
+        // Rotate 3D target by live camera yaw & pitch
+        const rx1 = x0 * cy - z0 * sy;
+        const rz1 = x0 * sy + z0 * cy;
+        const ry2 = y0 * cp - rz1 * sp;
+        const rz2 = y0 * sp + rz1 * cp;
+
+        if (reduced) {
+          px[i] = rx1; py[i] = ry2; pz[i] = rz2;
+          posInterleaved[i * 3] = rx1;
+          posInterleaved[i * 3 + 1] = ry2;
+          posInterleaved[i * 3 + 2] = rz2;
+          continue;
+        }
+
+        const x = px[i], y = py[i], z = pz[i];
+        const ph = pPhase[i];
+
+        if (k === 1) {
+          // Assimilis-style murmuration scout `1`/`0` particle drifting in 3D curl flow around the mask
+          const r = Math.hypot(x, y, z) || 0.001;
+          const targetR = 1.48 + 0.24 * Math.sin(t * 0.9 + ph);
+          const err = (targetR - r) / r;
+          let ax = x * err * 2.6 + (Math.sin(y * f1 + flowT) * Math.cos(z * f1 - flowT * 0.7) - z * 0.48) * 0.95;
+          let ay = y * err * 2.6 + (Math.sin(z * f1 - flowT * 0.8) * Math.cos(x * f1 + flowT * 0.6) + Math.sin(t * 0.6 + ph) * 0.28) * 0.95;
+          let az = z * err * 2.6 + (Math.sin(x * f1 + flowT * 0.9) * Math.cos(y * f1 - flowT * 0.5) + x * 0.48) * 0.95;
+          if (mouseIn && !dragging) {
+            const dx = x - pmx, dy = y - pmy, d2 = dx * dx + dy * dy;
+            if (d2 < 0.55) {
+              const d = Math.sqrt(d2) + 1e-4, f2 = (1 - d / 0.74) ** 2;
+              ax += (dx / d) * 6.5 * f2 - (dy / d) * 4.5 * f2;
+              ay += (dy / d) * 6.5 * f2 + (dx / d) * 4.5 * f2;
+            }
+          }
+          vx[i] = (vx[i] + ax * dt) * dragScout;
+          vy[i] = (vy[i] + ay * dt) * dragScout;
+          vz[i] = (vz[i] + az * dt) * dragScout;
+          px[i] = x + vx[i] * dt;
+          py[i] = y + vy[i] * dt;
+          pz[i] = z + vz[i] * dt;
+        } else if (k === 2) {
+          // Voice-reactive 3D glowing eye core particle (locked smoothly inside socket, vibrates with speech)
+          const vib = smoothSpeech * 0.022;
+          const tx = rx1 + Math.cos(t * 16.0 + ph) * vib;
+          const ty = ry2 + Math.sin(t * 18.0 + ph) * vib * 0.5;
+          const tz = rz2 + smoothSpeech * 0.035;
+          vx[i] = (vx[i] + (tx - x) * spgEye * dt) * dragFace;
+          vy[i] = (vy[i] + (ty - y) * spgEye * dt) * dragFace;
+          vz[i] = (vz[i] + (tz - z) * spgEye * dt) * dragFace;
+          px[i] = x + vx[i] * dt;
+          py[i] = y + vy[i] * dt;
+          pz[i] = z + vz[i] * dt;
+        } else {
+          // Primary floating 3D `1` & `0` face particle: springs to 3D mask contour + gentle living hover float!
+          const floatAmp = 0.015 + (state === 'ALERT' ? 0.010 : 0.0);
+          let tx = rx1 + Math.sin(t * 1.9 + ph + y0 * 3.2) * floatAmp;
+          let ty = ry2 + Math.cos(t * 1.6 + ph + x0 * 3.2) * floatAmp;
+          let tz = rz2 + Math.sin(t * 1.4 + ph * 1.7) * floatAmp * 1.3;
+
+          // Subtle acoustic pressure ripple radiating outward when speaking via Fish / Voice Studio!
+          if (smoothSpeech > 0.02) {
+            const rad = Math.hypot(x0, y0) + 0.001;
+            const wave = Math.sin(rad * 10.5 - t * 14.0) * smoothSpeech * 0.038;
+            tx += (x0 / rad) * wave * 0.45;
+            ty += (y0 / rad) * wave * 0.45;
+            tz += wave;
+          }
+
+          let ax = (tx - x) * spgFace;
+          let ay = (ty - y) * spgFace;
+          let az = (tz - z) * spgFace;
+
+          // Assimilis Holo Engine pointer parting & vortex swirl!
+          if (mouseIn && !dragging) {
+            const dx = x - pmx, dy = y - pmy, d2 = dx * dx + dy * dy;
+            if (d2 < hoverRad2) {
+              const d = Math.sqrt(d2) + 1e-4;
+              const fall = 1 - d / hoverRad;
+              const f2 = fall * fall;
+              const part = 5.4 * f2 * (d < 0.25 ? 1.35 : 0.7);
+              const cross = dx * pmvy - dy * pmvx;
+              const sgn = Math.abs(cross) > 0.01 ? (cross >= 0 ? 1 : -1) : 1;
+              const swirl = 3.8 * f2 * (0.65 + Math.min(1.5, mvSpd * 0.2)) * sgn;
+              ax += (dx / d) * part + (-dy / d) * swirl + pmvx * 0.75 * f2;
+              ay += (dy / d) * part + (dx / d) * swirl + pmvy * 0.75 * f2;
+              az += (0.45 - d) * 2.4 * f2;
+            }
+          }
+
+          vx[i] = (vx[i] + ax * dt) * dragFace;
+          vy[i] = (vy[i] + ay * dt) * dragFace;
+          vz[i] = (vz[i] + az * dt) * dragFace;
+          px[i] = x + vx[i] * dt;
+          py[i] = y + vy[i] * dt;
+          pz[i] = z + vz[i] * dt;
+        }
+
+        posInterleaved[i * 3] = px[i];
+        posInterleaved[i * 3 + 1] = py[i];
+        posInterleaved[i * 3 + 2] = pz[i];
+      }
+      pmvx *= Math.exp(-9 * dt);
+      pmvy *= Math.exp(-9 * dt);
     }
 
     function render(now) {
@@ -845,71 +906,47 @@
       const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const minInterval = fps <= 12 ? 80 : 14;
       if (now - lastDraw < minInterval) return;
+      const dt = lastDraw ? Math.min(0.05, Math.max(0.008, (now - lastDraw) / 1000)) : 0.016;
       lastDraw = now;
 
       resize();
       if (!reduced) {
-        t += fps <= 12 ? 0.065 : 0.016;
-        if (!dragging) yaw = 0.30 * Math.sin(t * 0.62);
+        t += fps <= 12 ? 0.065 : dt;
+        if (!dragging) yaw = 0.28 * Math.sin(t * 0.58);
       }
 
       drawMatrixRain(reduced);
+      stepParticles(dt, reduced);
 
-      if (gl && progMask && vaoMask) {
+      if (gl && progPt && vaoPt && N > 0) {
         gl.viewport(0, 0, canvas.width, canvas.height);
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        if (progPt && vaoPt) {
-          gl.disable(gl.DEPTH_TEST);
-          gl.enable(gl.BLEND);
-          gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-          gl.useProgram(progPt);
-          gl.uniform2f(gl.getUniformLocation(progPt, 'uRes'), W, H);
-          gl.uniform1f(gl.getUniformLocation(progPt, 'uTime'), t);
-          gl.uniform1f(gl.getUniformLocation(progPt, 'uYaw'), yaw);
-          gl.uniform1f(gl.getUniformLocation(progPt, 'uZoom'), zoom);
-          gl.uniform1f(gl.getUniformLocation(progPt, 'uDpr'), DPR);
-          const sc = stateCode();
-          if (sc === 3) {
-            gl.uniform3f(gl.getUniformLocation(progPt, 'uC1'), 0.07, 0.78, 0.56);
-            gl.uniform3f(gl.getUniformLocation(progPt, 'uC2'), 0.96, 0.14, 0.24);
-          } else if (redTheme || sc === 2) {
-            gl.uniform3f(gl.getUniformLocation(progPt, 'uC1'), 0.98, 0.10, 0.20);
-            gl.uniform3f(gl.getUniformLocation(progPt, 'uC2'), 1.00, 0.38, 0.28);
-          } else {
-            gl.uniform3f(gl.getUniformLocation(progPt, 'uC1'), 0.04, 0.72, 0.92);
-            gl.uniform3f(gl.getUniformLocation(progPt, 'uC2'), 0.92, 0.12, 0.20);
-          }
-          gl.bindVertexArray(vaoPt);
-          gl.drawArrays(gl.POINTS, 0, ptCount);
-          gl.bindVertexArray(null);
-        }
+        // Upload live floating particle positions from Assimilis physics engine
+        gl.bindBuffer(gl.ARRAY_BUFFER, bPos);
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, posInterleaved);
 
-        gl.enable(gl.DEPTH_TEST);
-        gl.depthFunc(gl.LEQUAL);
+        // Pure luminous additive holographic particles (zero solid background shell!)
+        gl.disable(gl.DEPTH_TEST);
         gl.enable(gl.BLEND);
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-        gl.useProgram(progMask);
-        gl.uniform2f(gl.getUniformLocation(progMask, 'uRes'), W, H);
-        gl.uniform1f(gl.getUniformLocation(progMask, 'uYaw'), yaw);
-        gl.uniform1f(gl.getUniformLocation(progMask, 'uPitch'), pitch);
-        gl.uniform1f(gl.getUniformLocation(progMask, 'uZoom'), zoom);
-        gl.uniform1f(gl.getUniformLocation(progMask, 'uBob'), reduced ? 0 : Math.sin(t * 1.35) * 0.035);
-        gl.uniform1f(gl.getUniformLocation(progMask, 'uGlitch'), 0.0);
-        gl.uniform1f(gl.getUniformLocation(progMask, 'uTime'), t);
-        gl.uniform1i(gl.getUniformLocation(progMask, 'uState'), stateCode());
-        gl.uniform1f(gl.getUniformLocation(progMask, 'uCustomMesh'), customMeshFlag);
-        gl.uniform1f(gl.getUniformLocation(progMask, 'uRedTheme'), redTheme ? 1.0 : 0.0);
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, texMask);
-        gl.uniform1i(gl.getUniformLocation(progMask, 'uTex'), 0);
-        gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, texGlyph);
-        gl.uniform1i(gl.getUniformLocation(progMask, 'uGlyphTex'), 1);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
-        gl.bindVertexArray(vaoMask);
-        gl.drawElements(gl.TRIANGLES, indexCount, gl.UNSIGNED_INT, 0);
+        gl.useProgram(progPt);
+        gl.uniform2f(gl.getUniformLocation(progPt, 'uRes'), W, H);
+        gl.uniform1f(gl.getUniformLocation(progPt, 'uTime'), t);
+        gl.uniform1f(gl.getUniformLocation(progPt, 'uZoom'), zoom);
+        gl.uniform1f(gl.getUniformLocation(progPt, 'uDpr'), DPR);
+        gl.uniform1f(gl.getUniformLocation(progPt, 'uSpeech'), smoothSpeech);
+        gl.uniform1i(gl.getUniformLocation(progPt, 'uState'), stateCode());
+        gl.uniform1f(gl.getUniformLocation(progPt, 'uRedTheme'), redTheme ? 1.0 : 0.0);
+
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texGlyph);
+        gl.uniform1i(gl.getUniformLocation(progPt, 'uGlyphTex'), 0);
+
+        gl.bindVertexArray(vaoPt);
+        gl.drawArrays(gl.POINTS, 0, N);
         gl.bindVertexArray(null);
       }
 
@@ -919,11 +956,27 @@
     canvas.addEventListener('pointerdown', (e) => {
       dragging = true; lx = e.clientX; ly = e.clientY;
     });
+    canvas.addEventListener('pointerleave', () => { mouseIn = false; });
     window.addEventListener('pointermove', (e) => {
-      if (!dragging) return;
-      yaw += (e.clientX - lx) * 0.009;
-      pitch = Math.max(-0.75, Math.min(0.75, pitch + (e.clientY - ly) * 0.008));
-      lx = e.clientX; ly = e.clientY;
+      const r = canvas.getBoundingClientRect();
+      if (dragging) {
+        yaw += (e.clientX - lx) * 0.009;
+        pitch = Math.max(-0.75, Math.min(0.75, pitch + (e.clientY - ly) * 0.008));
+        lx = e.clientX; ly = e.clientY;
+        return;
+      }
+      if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+        const aspect = r.width / Math.max(1, r.height);
+        const nx = ((e.clientX - r.left) / Math.max(1, r.width) * 2 - 1) * aspect * (1.6 / zoom);
+        const ny = -((e.clientY - r.top) / Math.max(1, r.height) * 2 - 1) * (1.6 / zoom);
+        if (mouseIn) {
+          pmvx = Math.max(-12, Math.min(12, (nx - pmx) * 32));
+          pmvy = Math.max(-12, Math.min(12, (ny - pmy) * 32));
+        }
+        pmx = nx; pmy = ny; mouseIn = true;
+      } else {
+        mouseIn = false;
+      }
     });
     window.addEventListener('pointerup', () => { dragging = false; });
     canvas.addEventListener('wheel', (e) => {
@@ -934,17 +987,28 @@
     rafId = requestAnimationFrame(render);
 
     return {
-      setState(next) { state = String(next || 'IDLE').toUpperCase(); },
+      setState(next) {
+        const n = String(next || 'IDLE').toUpperCase();
+        if (n !== state) swirlImpulse(0.65);
+        state = n;
+      },
+      setSpeechLevel(lvl) {
+        targetSpeech = Math.max(0, Math.min(1.5, Number(lvl) || 0));
+      },
+      setSpeaking(active) {
+        speakingFlag = !!active;
+        if (!active) targetSpeech = 0;
+      },
       setFps(next) { fps = Number(next) <= 12 ? 12 : 60; },
       setTheme(next) { redTheme = next !== 'agentsar'; },
       loadObjMesh(objText) {
-        const m = parseObjText(objText);
-        if (m) uploadMesh(m, true);
-        return !!m;
+        const pts = parseObjToParticles(objText);
+        if (pts) { loadParticleCloud(pts, true); swirlImpulse(0.9); }
+        return !!pts;
       },
       destroy() { alive = false; if (rafId) cancelAnimationFrame(rafId); }
     };
   }
 
-  root.ChappaMask = { createMaskStage, parseObjText };
+  root.ChappaMask = { createMaskStage, parseObjText: parseObjToParticles };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -59,6 +59,12 @@
       stage.setState(d.mask_state || 'IDLE');
       document.getElementById('badgeText').textContent = `CHAPPA V2 · ${d.mask_state || 'IDLE'} · ${d.open_alerts || 0} OPEN · ${d.pins_count || 0} PINS`;
     }
+    window.addEventListener('message', (ev) => {
+      const d = ev && ev.data;
+      if (!d || typeof d !== 'object') return;
+      if (typeof d.chappaSpeechLevel === 'number') stage.setSpeechLevel(d.chappaSpeechLevel);
+      if (typeof d.chappaSpeaking === 'boolean') stage.setSpeaking(d.chappaSpeaking);
+    });
     fetch('api/chappa/status', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(apply).catch(() => {});
     if (typeof EventSource !== 'undefined') {
       const es = new EventSource('api/chappa/events');
