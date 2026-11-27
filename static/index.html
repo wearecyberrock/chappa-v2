@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chappa V2 — Cyber Command Center</title>
+  <link rel="stylesheet" href="static/chappa.css">
+</head>
+<body>
+  <div class="ch-app">
+    <header class="ch-topbar">
+      <div class="ch-brand">
+        <span>CHAPPA V2</span>
+        <span class="ch-brand-tag">HERMES CYBER AGENT</span>
+        <span id="statusPill" class="ch-pill">IDLE · 0 ALERTS</span>
+      </div>
+      <div class="ch-actions">
+        <button type="button" class="ch-btn on" data-view-btn onclick="switchView('mask', this)">3D Mask</button>
+        <button type="button" class="ch-btn" data-view-btn onclick="switchView('globe', this)">God's Eye Globe</button>
+        <button type="button" class="ch-btn" data-view-btn onclick="switchView('soc', this)">Vigil SOC</button>
+        <button type="button" id="fpsBtn" class="ch-btn" data-fps="12" onclick="toggleFps()">12fps (On Twos)</button>
+      </div>
+    </header>
+
+    <aside class="ch-sidebar">
+      <div class="ch-card">
+        <div class="ch-k">ACTIVE TARGET</div>
+        <input id="targetInput" class="ch-input" placeholder="domain, IP, or CIDR (e.g. example.com)">
+        <div class="ch-k">MASK STATE</div>
+        <div class="ch-row">
+          <button type="button" class="ch-btn" onclick="setMaskState('IDLE')">Idle</button>
+          <button type="button" class="ch-btn" onclick="setMaskState('RECON')">Recon</button>
+          <button type="button" class="ch-btn danger" onclick="setMaskState('ALERT')">Alert</button>
+          <button type="button" class="ch-btn" onclick="setMaskState('CONTAINED')">Lock</button>
+        </div>
+      </div>
+
+      <div class="ch-card">
+        <div class="ch-k">RECENT FINDINGS</div>
+        <div id="findingsList" class="ch-list"><div class="ch-muted">Loading…</div></div>
+      </div>
+
+      <div class="ch-card">
+        <div class="ch-k">HOT MODULES (~/.chappa/modules)</div>
+        <div class="ch-row">
+          <input id="modNameInput" class="ch-input" style="flex:1 1 auto" placeholder="module-id">
+          <button type="button" class="ch-btn on" onclick="installDemoModule()">+ Hot Add</button>
+        </div>
+        <div id="modulesList" class="ch-list"><div class="ch-muted">No hot modules yet.</div></div>
+      </div>
+    </aside>
+
+    <main class="ch-stage">
+      <section id="view-mask" class="ch-view active">
+        <canvas id="maskStageCanvas"></canvas>
+        <div id="stageHud" class="ch-stage-hud">CHAPPA V2 · INITIALIZING…</div>
+        <div id="replyBox" class="ch-reply-box"></div>
+      </section>
+
+      <section id="view-globe" class="ch-view">
+        <div class="ch-placeholder">
+          <div class="ch-k">GOD'S EYE VIEW · SLICE 3</div>
+          <h3>3D Geospatial Intelligence Globe</h3>
+          <p class="ch-muted">God's Eye View static Cesium/vector bundle plugs in here in Slice 3 — auto-plotting HackingTool v2 IPs, ASNs, and Vigil threat arcs.</p>
+        </div>
+      </section>
+
+      <section id="view-soc" class="ch-view">
+        <div class="ch-placeholder">
+          <div class="ch-k">VIGIL AI SOC · SLICE 4</div>
+          <h3>Autonomous SOC Triage &amp; Playbooks</h3>
+          <p class="ch-muted">Vigil's in-process SQLite SOC engine connects here in Slice 4 — powered directly by Hermes (Antigravity + local models).</p>
+        </div>
+      </section>
+    </main>
+
+    <form class="ch-cmdbar" onsubmit="sendCommand(event)">
+      <input id="cmdInput" class="ch-input" placeholder="Command Chappa V2 (e.g. 'scan example.com', 'triage alert', 'contain host')…">
+      <button type="submit" class="ch-btn on">Execute</button>
+    </form>
+  </div>
+
+  <script src="static/chappa-mask.js"></script>
+  <script src="static/chappa.js"></script>
+</body>
+</html>
