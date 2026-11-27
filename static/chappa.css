@@ -49,13 +49,15 @@ body::before {
 
 /* Top HUD Header */
 .ch-topbar {
-  height: 52px;
+  min-height: 52px;
+  height: auto;
   flex: 0 0 auto;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 16px;
+  padding: 6px 16px;
   background: rgba(12, 2, 5, 0.90);
   border-bottom: 1px solid rgba(255, 30, 56, 0.36);
   backdrop-filter: blur(12px);
@@ -78,7 +80,17 @@ body::before {
 }
 .ch-pill.alert { border-color: rgba(255, 60, 82, 0.9); background: rgba(232, 28, 46, 0.30); color: #ffd0d6; }
 
-.ch-top-controls { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+.ch-top-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  /* min-width lets the group shrink so flex-wrap can actually break; without
+     it the row sizes to content and spills past the viewport edge. */
+  flex: 1 1 auto;
+  min-width: 0;
+}
 .ch-select, .ch-input {
   padding: 5px 9px;
   border-radius: 6px;
@@ -331,6 +343,10 @@ body::before {
   color: #a87682;
 }
 .ch-tool-cmdrow { align-items: center; gap: 6px; }
+/* The list and the detail panel scroll independently so Run output stays in
+   view while browsing a long catalog. */
+#toolsList { max-height: 300px; overflow-y: auto; padding-right: 4px; }
+#toolDetail { max-height: 240px; overflow-y: auto; }
 .ch-tool-cmd {
   flex: 1 1 auto;
   font-family: ui-monospace, Menlo, Consolas, monospace;

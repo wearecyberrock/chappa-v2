@@ -298,11 +298,19 @@ def run_tool(
     allowed = _allowed_binaries(tool)
     if not argv:
         return {"ok": False, "error": "empty command"}
-    binary = Path(argv[0].replace("\\", "/")).name.lower()
+    # The allowlist is built from command text with wrappers stripped, so the
+    # runtime check must strip the same wrappers or `sudo nmap ...` would be
+    # validated as the binary `sudo` (which no entry ever declares).
+    unwrapped = list(argv)
+    while unwrapped and Path(unwrapped[0].replace("\\", "/")).name.lower() in {"sudo", "env", "time", "nohup"}:
+        unwrapped = unwrapped[1:]
+    if not unwrapped:
+        return {"ok": False, "error": "command contains only a wrapper, no tool"}
+    binary = Path(unwrapped[0].replace("\\", "/")).name.lower()
     if binary not in allowed:
         return {"ok": False, "error": f"binary '{binary}' is not declared by this entry"}
 
-    resolved = shutil.which(argv[0])
+    resolved = shutil.which(unwrapped[0])
     if dry_run:
         return {
             "ok": True,
@@ -318,7 +326,7 @@ def run_tool(
     if resolved is None:
         return {
             "ok": False,
-            "error": f"'{argv[0]}' is not installed on this host",
+            "error": f"'{unwrapped[0]}' is not installed on this host",
             "install_hint": tool.get("url") or "",
             "argv": argv,
         }

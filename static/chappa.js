@@ -151,6 +151,7 @@
     const p = document.getElementById('pane-' + paneName);
     if (p) p.classList.add('active');
     document.querySelectorAll('.ch-dtab').forEach((b) => b.classList.toggle('on', b.dataset.dtab === paneName));
+    try { history.replaceState(null, '', '#' + paneName); } catch (_) {}
     if (paneName === 'tools') loadToolCatalog();
     if (paneName === 'globe' && !globe) {
       const gc = document.getElementById('globeCanvas');
@@ -557,8 +558,28 @@
       try { const f = JSON.parse(ev.data); if (globe) globe.flyTo(f.lat, f.lon, f.label); } catch (_) {}
     });
     es.addEventListener('chat_reply', () => refreshStatus());
+    es.addEventListener('tool_run', (ev) => {
+      try {
+        const d = JSON.parse(ev.data);
+        const out = document.getElementById('toolRunOutput');
+        if (out && d.tool_id) {
+          out.textContent = `${d.ok ? 'OK' : 'REFUSED/FAILED'} · ${d.title || d.tool_id}`
+            + (d.error ? `\nerror: ${d.error}` : '') + (d.argv && d.argv.length ? `\nargv: ${JSON.stringify(d.argv)}` : '');
+        }
+        refreshStatus();
+      } catch (_) {}
+    });
   }
+
+  // Deep link: /#tools opens that drawer pane directly (handy for screenshots,
+  // bookmarks, and jumping straight to a pane from another app).
+  const openPaneFromHash = () => {
+    const name = (location.hash || '').replace(/^#\/?/, '').trim();
+    if (name) openDrawer(name);
+  };
+  window.addEventListener('hashchange', openPaneFromHash);
 
   refreshStatus();
   loadModels();
+  openPaneFromHash();
 })();
