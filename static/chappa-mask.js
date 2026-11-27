@@ -368,6 +368,7 @@
   uniform float uTime;
   uniform int uState; // 0=IDLE, 1=RECON, 2=ALERT, 3=CONTAINED
   uniform float uCustomMesh;
+  uniform float uRedTheme;
   out vec4 outColor;
 
   float eyeSlit(vec2 fuv) {
@@ -386,33 +387,32 @@
     vec3 N = normalize(gl_FrontFacing ? vNormal : -vNormal);
     vec3 V = normalize(-vViewPos);
 
-    // State-reactive rim & accent colors (Agentsar Cyan #08B6E8 + Crimson #E81C2E)
-    vec3 rimCyan = vec3(0.03, 0.71, 0.91);
-    vec3 rimRed  = vec3(0.91, 0.11, 0.18);
+    // State & Theme reactive rim colors (Red Matrix default OR Agentsar Cyan/Crimson)
+    vec3 rimCyan = uRedTheme > 0.5 ? vec3(0.96, 0.10, 0.20) : vec3(0.03, 0.71, 0.91);
+    vec3 rimRed  = uRedTheme > 0.5 ? vec3(1.00, 0.28, 0.18) : vec3(0.91, 0.11, 0.18);
     if (uState == 2) {
-      rimCyan = vec3(0.98, 0.14, 0.24);
-      rimRed  = vec3(0.06, 0.72, 0.94);
+      rimCyan = vec3(1.0, 0.08, 0.16);
+      rimRed  = vec3(1.0, 0.32, 0.14);
     } else if (uState == 3) {
       rimCyan = vec3(0.07, 0.78, 0.56);
-      rimRed  = vec3(0.04, 0.68, 0.88);
+      rimRed  = uRedTheme > 0.5 ? vec3(0.92, 0.14, 0.22) : vec3(0.04, 0.68, 0.88);
     }
 
     // Real hollow pierced eye cutouts with glowing cyber core inside the socket
     if (uCustomMesh < 0.5) {
       float es = eyeSlit(fuv);
       if (es < 0.0) {
-        // Deep hollow void with subtle glowing holographic pupil inside
         float px = (abs(fuv.x) - 0.345) / 0.055;
         float py = (fuv.y + 0.178) / 0.028;
         float pupil = exp(-(px * px + py * py) * 2.4);
-        vec3 eyeGlow = (uState == 2 ? vec3(1.0, 0.16, 0.26) : rimCyan) * (0.28 + 0.85 * pupil);
-        vec3 voidCol = vec3(0.012, 0.018, 0.032) + eyeGlow * (0.65 + 0.35 * sin(uTime * 3.5));
-        outColor = vec4(voidCol, 0.98);
+        vec3 eyeBase = (uRedTheme > 0.5 || uState == 2) ? vec3(1.0, 0.10, 0.18) : rimCyan;
+        vec3 eyeGlow = eyeBase * (0.32 + 0.95 * pupil);
+        vec3 voidCol = vec3(0.02, 0.006, 0.01) + eyeGlow * (0.7 + 0.3 * sin(uTime * 3.5));
+        outColor = vec4(voidCol, 0.99);
         return;
       }
-      // Darkened porcelain bevel right around the eye cutout edge
       if (es < 0.012) {
-        outColor = vec4(mix(vec3(0.06, 0.08, 0.12), rimCyan * 0.7, 0.35), 1.0);
+        outColor = vec4(mix(vec3(0.06, 0.04, 0.06), rimCyan * 0.75, 0.42), 1.0);
         return;
       }
     }
@@ -420,7 +420,7 @@
     vec3 albedo = uCustomMesh > 0.5 ? vec3(0.90, 0.93, 0.96) : texture(uTex, vUv).rgb;
     float isDarkFeature = 1.0 - smoothstep(0.18, 0.42, dot(albedo, vec3(0.333)));
 
-    // 3-point Cinema Studio + Hologram Lighting (Key + Cyan Rim + Crimson Fill)
+    // 3-point Cinema Studio + Hologram Lighting (Key + Left Rim + Right Rim)
     vec3 Lkey  = normalize(vec3(0.28, 0.52, 0.84));
     vec3 Lrim1 = normalize(vec3(-0.90, 0.22, 0.26));
     vec3 Lrim2 = normalize(vec3(0.90, -0.15, 0.24));
@@ -429,38 +429,35 @@
     float diffRim1 = max(dot(N, Lrim1), 0.0);
     float diffRim2 = max(dot(N, Lrim2), 0.0);
 
-    // Glossy porcelain specular highlight off forehead, nose bridge, cheekbones & chin
     vec3 H = normalize(Lkey + V);
     float spec = pow(max(dot(N, H), 0.0), mix(52.0, 16.0, isDarkFeature)) * mix(0.42, 0.14, isDarkFeature);
 
-    // Rich sculpted studio shading (preserves all 3D contours without clipping to flat white)
-    float wrapDiff = max((dot(N, Lkey) + 0.26) / 1.26, 0.0);
-    float fresnel = pow(1.0 - max(dot(N, V), 0.0), 2.7);
+    float wrapDiff = max((dot(N, Lkey) + 0.24) / 1.24, 0.0);
+    float fresnel = pow(1.0 - max(dot(N, V), 0.0), 2.65);
+    // Concentrate strong crimson/cyan Fresnel rim on the outer mask silhouette (keeps sculpted nose clean porcelain!)
+    float outerRim = uCustomMesh > 0.5 ? 1.0 : smoothstep(0.38, 0.90, length(fuv * vec2(1.08, 0.88)));
+    float rimFade = mix(0.14, 1.0, outerRim);
 
-    vec3 col = albedo * (0.14 + 0.62 * wrapDiff + 0.16 * diffKey);
-    col += vec3(0.95, 0.98, 1.0) * spec;
-    col += rimCyan * (diffRim1 * 0.18 + fresnel * (0.62 + 0.42 * smoothstep(-0.2, 0.6, -N.x)));
-    col += rimRed  * (diffRim2 * 0.16 + fresnel * (0.50 + 0.42 * smoothstep(-0.2, 0.6,  N.x)));
+    vec3 col = albedo * (0.14 + 0.60 * wrapDiff + 0.16 * diffKey);
+    col += vec3(0.98, 0.98, 1.0) * spec;
+    col += rimCyan * (diffRim1 * 0.24 * rimFade + fresnel * rimFade * (0.78 + 0.42 * smoothstep(-0.2, 0.6, -N.x)));
+    col += rimRed  * (diffRim2 * 0.20 * rimFade + fresnel * rimFade * (0.62 + 0.42 * smoothstep(-0.2, 0.6,  N.x)));
 
-    // Subtle holographic scanlines along the sculpted 3D surface
-    float scan = 0.975 + 0.025 * sin(vLocal.y * 125.0 - uTime * 3.0);
+    float scan = 0.976 + 0.024 * sin(vLocal.y * 125.0 - uTime * 3.0);
     col *= scan;
 
-    // RECON mode: volumetric sweeping cyan laser scan beam across the 3D mask
     if (uState == 1) {
       float beamY = sin(uTime * 1.9) * 1.05;
       float beam = exp(-pow((vLocal.y - beamY) / 0.08, 2.0));
-      col += vec3(0.08, 0.88, 1.0) * beam * 0.65;
+      col += (uRedTheme > 0.5 ? vec3(1.0, 0.16, 0.26) : vec3(0.08, 0.88, 1.0)) * beam * 0.72;
     }
-    // ALERT mode: smooth pulsing crimson edge rim & subtle scanline flash (zero wavy distortion!)
     if (uState == 2) {
       float pulse = 0.5 + 0.5 * sin(uTime * 6.0);
-      col += vec3(0.95, 0.10, 0.18) * (fresnel * 0.72 * pulse + 0.04);
+      col += vec3(1.0, 0.08, 0.16) * (fresnel * rimFade * 0.92 * pulse + 0.04);
     }
 
-    // Back-face dark shell interior when orbited far sideways
     if (!gl_FrontFacing) {
-      col = mix(vec3(0.03, 0.05, 0.09), rimCyan * 0.35, fresnel);
+      col = mix(vec3(0.04, 0.01, 0.02), rimCyan * 0.35, fresnel);
     }
 
     outColor = vec4(col, 0.99);
@@ -541,11 +538,16 @@
     let alive = true, rafId = 0;
     let state = String(o.state || 'IDLE').toUpperCase();
     let fps = Number(o.fps || 60);
+    let redTheme = o.theme !== 'agentsar';
     let customMeshFlag = 0.0;
 
-    // Optional 2D overlay canvas for Assimilis-Core precision HUD rings
+    // Optional 2D overlay canvas for precision HUD rings + background canvas for Red Matrix 1/0 rain
     let hudCanvas = o.hudCanvas || null;
     let hudCtx = hudCanvas ? hudCanvas.getContext('2d') : null;
+    let matrixCanvas = o.matrixCanvas || null;
+    let matrixCtx = matrixCanvas ? matrixCanvas.getContext('2d') : null;
+    let matrixDrops = [];
+    let matrixCols = 0;
 
     let progMask = null, progPt = null, vaoMask = null, vaoPt = null, texMask = null;
     let indexCount = 0;
@@ -599,7 +601,6 @@
 
       uploadMesh(buildHighPolyMaskMesh(), false);
 
-      // Orbiting volumetric holographic particle halo (Assimilis Core feel)
       const ptPos = new Float32Array(ptCount * 3);
       const ptPh = new Float32Array(ptCount);
       for (let i = 0; i < ptCount; i++) {
@@ -646,6 +647,62 @@
       if (hudCanvas && (hudCanvas.width !== pw || hudCanvas.height !== ph)) {
         hudCanvas.width = pw; hudCanvas.height = ph;
       }
+      if (matrixCanvas && (matrixCanvas.width !== pw || matrixCanvas.height !== ph)) {
+        matrixCanvas.width = pw; matrixCanvas.height = ph;
+        matrixCols = Math.max(22, Math.floor(W / 15));
+        matrixDrops = Array.from({ length: matrixCols }, (_, i) => ({
+          y: ((i * 8.7) % (H / 15)),
+          spd: 0.26 + ((i * 13) % 7) * 0.055,
+          len: 13 + (i % 14),
+          seed: i * 17 + 3
+        }));
+      }
+    }
+
+    function drawMatrixRain(reduced) {
+      if (!matrixCtx) return;
+      matrixCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      matrixCtx.clearRect(0, 0, W, H);
+      if (!redTheme) return;
+
+      const cellW = W / Math.max(1, matrixCols);
+      const cellH = 15;
+      matrixCtx.font = '700 13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+      matrixCtx.textAlign = 'center';
+
+      for (let c = 0; c < matrixCols; c++) {
+        const d = matrixDrops[c];
+        if (!reduced) {
+          d.y += d.spd * (state === 'ALERT' ? 1.55 : 1.0);
+          if ((d.y - d.len) * cellH > H + 20) d.y = -Math.random() * 12;
+        }
+        const x = c * cellW + cellW * 0.5;
+        // Soft center vignette so 1/0 streams frame the 3D Hacker Mask cleanly
+        const distCtr = Math.abs(x - W * 0.5) / (W * 0.5);
+        const colAlpha = 0.36 + 0.64 * Math.min(1, distCtr * 1.18);
+
+        const headRow = Math.floor(d.y);
+        for (let k = 0; k < d.len; k++) {
+          const row = headRow - k;
+          const y = row * cellH;
+          if (y < -cellH || y > H + cellH) continue;
+          const bit = ((row * 31 + d.seed + (reduced ? 0 : Math.floor(t * 2))) & 1) ? '1' : '0';
+          const fade = (1 - k / d.len);
+          if (k === 0) {
+            matrixCtx.shadowColor = '#ff1e38';
+            matrixCtx.shadowBlur = 9;
+            matrixCtx.fillStyle = `rgba(255, 224, 230, ${(0.96 * colAlpha).toFixed(2)})`;
+          } else if (k < 4) {
+            matrixCtx.shadowBlur = 0;
+            matrixCtx.fillStyle = `rgba(255, 34, 62, ${(0.90 * fade * colAlpha).toFixed(2)})`;
+          } else {
+            matrixCtx.shadowBlur = 0;
+            matrixCtx.fillStyle = `rgba(218, 16, 40, ${(0.72 * fade * colAlpha).toFixed(2)})`;
+          }
+          matrixCtx.fillText(bit, x, y);
+        }
+      }
+      matrixCtx.shadowBlur = 0;
     }
 
     function drawHudRings() {
@@ -654,14 +711,15 @@
       hudCtx.clearRect(0, 0, W, H);
       const cx = W * 0.5, cy = H * 0.5;
       const R = Math.min(W, H) * 0.375 * zoom;
-      const c1 = state === 'ALERT' ? '#e81c2e' : (state === 'CONTAINED' ? '#10b981' : '#08b6e8');
-      const c2 = state === 'ALERT' ? '#08b6e8' : '#e81c2e';
+      const c1 = redTheme
+        ? (state === 'CONTAINED' ? '#10b981' : '#ff243b')
+        : (state === 'ALERT' ? '#e81c2e' : (state === 'CONTAINED' ? '#10b981' : '#08b6e8'));
+      const c2 = redTheme ? '#ff6b7d' : (state === 'ALERT' ? '#08b6e8' : '#e81c2e');
 
-      // Precision JARVIS / Assimilis Core concentric HUD rings
       [
-        { r: R * 1.03, w: 1.4, col: c1 + '55', dash: [44, 16, 10, 16], spd: 0.18 },
-        { r: R * 1.15, w: 1.0, col: c2 + '40', dash: [22, 12], spd: -0.12 },
-        { r: R * 1.26, w: 0.85, col: c1 + '2c', dash: [6, 10], spd: 0.08 }
+        { r: R * 1.03, w: 1.4, col: c1 + '66', dash: [44, 16, 10, 16], spd: 0.18 },
+        { r: R * 1.15, w: 1.0, col: c2 + '48', dash: [22, 12], spd: -0.12 },
+        { r: R * 1.26, w: 0.85, col: c1 + '33', dash: [6, 10], spd: 0.08 }
       ].forEach((rg, idx) => {
         hudCtx.save();
         hudCtx.translate(cx, cy);
@@ -676,10 +734,9 @@
       });
       hudCtx.setLineDash([]);
 
-      // Degree tick marks on outer ring
       hudCtx.save();
       hudCtx.translate(cx, cy);
-      hudCtx.strokeStyle = c1 + '44';
+      hudCtx.strokeStyle = c1 + '4c';
       hudCtx.lineWidth = 1;
       for (let i = 0; i < 36; i++) {
         const a = (i / 36) * Math.PI * 2 + t * 0.05;
@@ -708,12 +765,13 @@
         if (!dragging) yaw = 0.30 * Math.sin(t * 0.62);
       }
 
+      drawMatrixRain(reduced);
+
       if (gl && progMask && vaoMask) {
         gl.viewport(0, 0, canvas.width, canvas.height);
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        // 1. Background holographic particle halo
         if (progPt && vaoPt) {
           gl.disable(gl.DEPTH_TEST);
           gl.enable(gl.BLEND);
@@ -725,12 +783,12 @@
           gl.uniform1f(gl.getUniformLocation(progPt, 'uZoom'), zoom);
           gl.uniform1f(gl.getUniformLocation(progPt, 'uDpr'), DPR);
           const sc = stateCode();
-          if (sc === 2) {
-            gl.uniform3f(gl.getUniformLocation(progPt, 'uC1'), 0.96, 0.14, 0.24);
-            gl.uniform3f(gl.getUniformLocation(progPt, 'uC2'), 0.06, 0.72, 0.94);
-          } else if (sc === 3) {
+          if (sc === 3) {
             gl.uniform3f(gl.getUniformLocation(progPt, 'uC1'), 0.07, 0.78, 0.56);
-            gl.uniform3f(gl.getUniformLocation(progPt, 'uC2'), 0.08, 0.75, 0.94);
+            gl.uniform3f(gl.getUniformLocation(progPt, 'uC2'), 0.96, 0.14, 0.24);
+          } else if (redTheme || sc === 2) {
+            gl.uniform3f(gl.getUniformLocation(progPt, 'uC1'), 0.98, 0.10, 0.20);
+            gl.uniform3f(gl.getUniformLocation(progPt, 'uC2'), 1.00, 0.38, 0.28);
           } else {
             gl.uniform3f(gl.getUniformLocation(progPt, 'uC1'), 0.04, 0.72, 0.92);
             gl.uniform3f(gl.getUniformLocation(progPt, 'uC2'), 0.92, 0.12, 0.20);
@@ -740,7 +798,6 @@
           gl.bindVertexArray(null);
         }
 
-        // 2. Sculpted 3D Guy Fawkes Hacker Mask (PBR Porcelain + Agentsar Fresnel)
         gl.enable(gl.DEPTH_TEST);
         gl.depthFunc(gl.LEQUAL);
         gl.enable(gl.BLEND);
@@ -751,10 +808,11 @@
         gl.uniform1f(gl.getUniformLocation(progMask, 'uPitch'), pitch);
         gl.uniform1f(gl.getUniformLocation(progMask, 'uZoom'), zoom);
         gl.uniform1f(gl.getUniformLocation(progMask, 'uBob'), reduced ? 0 : Math.sin(t * 1.35) * 0.035);
-        gl.uniform1f(gl.getUniformLocation(progMask, 'uGlitch'), (state === 'ALERT' && !reduced && Math.sin(t * 17) > 0.72) ? 1.0 : 0.0);
+        gl.uniform1f(gl.getUniformLocation(progMask, 'uGlitch'), 0.0);
         gl.uniform1f(gl.getUniformLocation(progMask, 'uTime'), t);
         gl.uniform1i(gl.getUniformLocation(progMask, 'uState'), stateCode());
         gl.uniform1f(gl.getUniformLocation(progMask, 'uCustomMesh'), customMeshFlag);
+        gl.uniform1f(gl.getUniformLocation(progMask, 'uRedTheme'), redTheme ? 1.0 : 0.0);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, texMask);
         gl.uniform1i(gl.getUniformLocation(progMask, 'uTex'), 0);
@@ -787,6 +845,7 @@
     return {
       setState(next) { state = String(next || 'IDLE').toUpperCase(); },
       setFps(next) { fps = Number(next) <= 12 ? 12 : 60; },
+      setTheme(next) { redTheme = next !== 'agentsar'; },
       loadObjMesh(objText) {
         const m = parseObjText(objText);
         if (m) uploadMesh(m, true);

@@ -618,7 +618,9 @@ class ChappaHandler(BaseHTTPRequestHandler):
         if path == "/api/chappa/custom-mask.obj":
             p = MODULES_DIR / "custom_mask.obj"
             if not p.is_file():
-                self.send_error(HTTPStatus.NOT_FOUND, "No custom mask uploaded")
+                self.send_response(HTTPStatus.NO_CONTENT)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
                 return
             data = p.read_bytes()
             self.send_response(200)

@@ -74,16 +74,16 @@
       const ctr = proj(0, 0, 0);
       const R = Math.min(W, H) * 0.35 * zoom;
 
-      // Atmosphere glow
+      // Atmosphere glow (Red Matrix Crimson)
       const atm = ctx.createRadialGradient(ctr.x, ctr.y, R * 0.55, ctr.x, ctr.y, R * 1.4);
-      atm.addColorStop(0, 'rgba(8, 182, 232, 0.16)');
-      atm.addColorStop(0.65, 'rgba(232, 28, 46, 0.05)');
+      atm.addColorStop(0, 'rgba(232, 28, 46, 0.22)');
+      atm.addColorStop(0.65, 'rgba(255, 70, 90, 0.06)');
       atm.addColorStop(1, 'transparent');
       ctx.fillStyle = atm;
       ctx.fillRect(0, 0, W, H);
 
       // Lat/Lon wireframe sphere
-      ctx.strokeStyle = 'rgba(8, 182, 232, 0.24)';
+      ctx.strokeStyle = 'rgba(232, 28, 46, 0.28)';
       ctx.lineWidth = 1;
       for (let lat = -60; lat <= 60; lat += 30) {
         const rl = (lat * Math.PI) / 180, y = Math.sin(rl) * 1.4, cr = Math.cos(rl) * 1.4;
@@ -110,8 +110,8 @@
       land.forEach((pt) => {
         const p = proj(pt[0] * 1.41, pt[1] * 1.41, pt[2] * 1.41);
         if (p.z < -0.25) return;
-        ctx.fillStyle = pt[3] ? '#5ce5f5' : '#08b6e8';
-        ctx.globalAlpha = Math.max(0.18, Math.min(0.95, (p.z + 1.4) / 2.4));
+        ctx.fillStyle = pt[3] ? '#ff6b7d' : '#e81c2e';
+        ctx.globalAlpha = Math.max(0.2, Math.min(0.95, (p.z + 1.4) / 2.4));
         ctx.fillRect(p.x - 1.3, p.y - 1.3, 2.6, 2.6);
       });
       ctx.globalAlpha = 1;
@@ -120,8 +120,8 @@
       const hq = pins[0] ? llTo3D(pins[0].lat, pins[0].lon, 1.44) : llTo3D(18.0179, -76.8099, 1.44);
       pins.slice(1, 14).forEach((pin) => {
         const dst = llTo3D(pin.lat, pin.lon, 1.44);
-        const col = (pin.severity === 'critical' || pin.severity === 'high') ? '#e81c2e' : '#08b6e8';
-        ctx.strokeStyle = col + '88';
+        const col = (pin.severity === 'critical' || pin.severity === 'high') ? '#ff2a42' : '#ff8a98';
+        ctx.strokeStyle = col + '99';
         ctx.lineWidth = 1.4;
         ctx.beginPath();
         for (let s = 0; s <= 18; s++) {
@@ -143,26 +143,26 @@
         const p = proj(v[0], v[1], v[2]);
         if (p.z < -0.1) return;
         const hot = pin.severity === 'critical' || pin.severity === 'high';
-        const col = hot ? '#e81c2e' : '#5ce5f5';
+        const col = hot ? '#ff2a42' : '#ff8a98';
         ctx.strokeStyle = col;
         ctx.lineWidth = 1.6;
         ctx.beginPath();
         ctx.arc(p.x, p.y, 4.5 + Math.sin(t * 4 + idx) * 2.2, 0, Math.PI * 2);
         ctx.stroke();
-        ctx.fillStyle = col;
+        ctx.fillStyle = hot ? '#ffffff' : col;
         ctx.beginPath();
         ctx.arc(p.x, p.y, 2.8, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = '#eaf6ff';
+        ctx.fillStyle = '#ffeef1';
         ctx.fillText(String(pin.label || 'PIN').slice(0, 22), p.x + 9, p.y + 3);
       });
 
       // Focus HUD pill
-      ctx.fillStyle = 'rgba(6, 11, 22, 0.82)';
-      ctx.strokeStyle = 'rgba(8, 182, 232, 0.45)';
+      ctx.fillStyle = 'rgba(14, 4, 8, 0.86)';
+      ctx.strokeStyle = 'rgba(232, 28, 46, 0.55)';
       ctx.fillRect(14, H - 36, 260, 24);
       ctx.strokeRect(14, H - 36, 260, 24);
-      ctx.fillStyle = '#5ce5f5';
+      ctx.fillStyle = '#ff6b7d';
       ctx.fillText(`GOD'S EYE · ${focusLabel.slice(0, 24)} · ${pins.length} PINS`, 22, H - 20);
     }
 

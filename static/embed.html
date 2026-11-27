@@ -2,47 +2,51 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Chappa V2 — Live 3D Mask Card</title>
+  <title>Chappa V2 — Red Matrix 3D Mask Card</title>
   <style>
     * { box-sizing: border-box; }
     html, body {
       margin: 0; width: 100%; height: 100%; overflow: hidden;
-      background: transparent; color: #eaf6ff;
+      background: #050103; color: #fff0f2;
       font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; user-select: none;
     }
     canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: transparent; }
+    #matrixCanvas { pointer-events: none; z-index: 1; }
     #maskCanvas { cursor: grab; z-index: 2; }
     #hudCanvas { pointer-events: none; z-index: 3; }
     .badge {
       position: fixed; left: 10px; bottom: 8px; z-index: 5;
       display: inline-flex; align-items: center; gap: 7px;
       padding: 4px 10px; border-radius: 999px;
-      background: rgba(6, 11, 22, 0.88);
-      border: 1px solid rgba(8, 182, 232, 0.55);
-      box-shadow: -1.5px 0 0 rgba(232, 28, 46, 0.6);
-      color: #dcf6ff; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; cursor: pointer;
+      background: rgba(16, 3, 7, 0.90);
+      border: 1px solid rgba(255, 30, 56, 0.65);
+      box-shadow: -1.5px 0 0 rgba(255, 110, 128, 0.65);
+      color: #ffe8ec; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; cursor: pointer;
     }
-    .dot { width: 7px; height: 7px; border-radius: 50%; background: #08b6e8; box-shadow: 0 0 8px #08b6e8; }
-    .badge.alert { border-color: rgba(232, 28, 46, 0.85); }
-    .badge.alert .dot { background: #e81c2e; box-shadow: 0 0 8px #e81c2e; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #ff1e38; box-shadow: 0 0 8px #ff1e38; }
     .open-btn {
-      border: 1px solid rgba(8, 182, 232, 0.45); background: rgba(8, 182, 232, 0.2);
+      border: 1px solid rgba(255, 30, 56, 0.55); background: rgba(232, 28, 46, 0.25);
       color: #fff; border-radius: 4px; padding: 1px 6px; font: inherit; font-size: 9.5px; cursor: pointer;
     }
   </style>
 </head>
 <body>
+  <canvas id="matrixCanvas"></canvas>
   <canvas id="maskCanvas"></canvas>
   <canvas id="hudCanvas"></canvas>
   <div id="threatBadge" class="badge" onclick="openChappa()">
     <span class="dot"></span>
-    <span id="badgeText">CHAPPA V2 · IDLE · 0 OPEN</span>
+    <span id="badgeText">CHAPPA V2 · RED MATRIX · 0 OPEN</span>
     <button type="button" class="open-btn" onclick="event.stopPropagation();openChappa()">Open</button>
   </div>
   <script src="static/chappa-mask.js"></script>
   <script>
     const stage = ChappaMask.createMaskStage(document.getElementById('maskCanvas'), {
-      hudCanvas: document.getElementById('hudCanvas'), fps: 60, zoom: 1.06
+      matrixCanvas: document.getElementById('matrixCanvas'),
+      hudCanvas: document.getElementById('hudCanvas'),
+      theme: 'red-matrix',
+      fps: 60,
+      zoom: 1.06
     });
     function openChappa() {
       try {
@@ -53,8 +57,6 @@
     function apply(d) {
       if (!d) return;
       stage.setState(d.mask_state || 'IDLE');
-      const b = document.getElementById('threatBadge');
-      b.classList.toggle('alert', d.mask_state === 'ALERT' || (d.open_alerts || 0) > 0);
       document.getElementById('badgeText').textContent = `CHAPPA V2 · ${d.mask_state || 'IDLE'} · ${d.open_alerts || 0} OPEN · ${d.pins_count || 0} PINS`;
     }
     fetch('api/chappa/status', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(apply).catch(() => {});

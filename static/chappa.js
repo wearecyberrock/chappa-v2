@@ -2,9 +2,10 @@
 (function () {
   'use strict';
 
+  const matrixCanvas = document.getElementById('maskMatrixCanvas');
   const maskCanvas = document.getElementById('maskStageCanvas');
   const hudCanvas = document.getElementById('maskHudCanvas');
-  const stage = ChappaMask.createMaskStage(maskCanvas, { hudCanvas, fps: 60, zoom: 1.05 });
+  const stage = ChappaMask.createMaskStage(maskCanvas, { matrixCanvas, hudCanvas, theme: 'red-matrix', fps: 60, zoom: 1.05 });
 
   let globe = null;
   let lastStatus = null;
