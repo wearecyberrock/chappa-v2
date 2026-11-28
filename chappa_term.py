@@ -81,24 +81,30 @@ def _hackingtool_command() -> list[str] | None:
 def profiles() -> dict[str, Any]:
     """What the UI may launch, and whether this deployment allows it at all."""
     shells = {}
-    for name, cmd in (
-        ("pwsh", "powershell.exe"),
-        ("cmd", "cmd.exe"),
-        ("bash", "bash.exe"),
-        ("wsl", "wsl.exe"),
+    # A profile is offered when any of its names resolves, so the same code
+    # serves Windows (powershell.exe/cmd.exe) and Linux/WSL (bash/sh/pwsh).
+    for name, candidates in (
+        ("pwsh", ("pwsh", "powershell.exe")),
+        ("bash", ("bash", "bash.exe")),
+        ("sh", ("sh",)),
+        ("cmd", ("cmd.exe",)),
+        ("wsl", ("wsl.exe",)),
     ):
-        resolved = _resolve(cmd)
-        if resolved:
-            shells[name] = resolved
+        for candidate in candidates:
+            resolved = _resolve(candidate)
+            if resolved:
+                shells[name] = resolved
+                break
     hack = _hackingtool_command()
     if hack:
         shells["hackingtool"] = hack
     return {
         "enabled": enabled(),
-        "pty": PtyProcess is not None,
+        "pty": PtyProcess is not None or os.name == "posix",
         "profiles": sorted(shells.keys()),
         "commands": shells,
-        "note": "PTY sessions" if PtyProcess else "pipe fallback (no pywinpty): line CLIs only",
+        "platform": "windows-conpty" if PtyProcess is not None else ("posix-pty" if os.name == "posix" else "pipes"),
+        "note": "real PTY" if (PtyProcess is not None or os.name == "posix") else "pipe fallback: line CLIs only",
     }
 
 
@@ -129,14 +135,21 @@ def start(kind: str, custom: str | None = None, cols: int = 120, rows: int = 32)
                 "hint": "py -m pip install -e hackingtool_v2  (or pass the 'custom' profile with a command)",
             }
     else:
-        cmd = {"pwsh": "powershell.exe", "cmd": "cmd.exe", "bash": "bash.exe", "wsl": "wsl.exe"}.get(kind)
-        if not cmd:
-            return {"ok": False, "error": f"unknown profile: {kind}", "hint": "try pwsh, cmd, hackingtool or custom"}
-        argv = _resolve(cmd) or []
+        candidates = {
+            "pwsh": ("pwsh", "powershell.exe"),
+            "bash": ("bash", "bash.exe"),
+            "sh": ("sh",),
+            "cmd": ("cmd.exe",),
+            "wsl": ("wsl.exe",),
+        }.get(kind)
+        if not candidates:
+            return {"ok": False, "error": f"unknown profile: {kind}", "hint": "try pwsh, bash, cmd, wsl or custom"}
+        argv = next((resolved for resolved in (_resolve(c) for c in candidates) if resolved), [])
         if not argv:
-            return {"ok": False, "error": f"{cmd} not found on this host"}
+            return {"ok": False, "error": f"{kind} not found on this host"}
 
     sid = uuid.uuid4().hex[:12]
+    master_fd = None
     try:
         if PtyProcess is not None:
             # ConPTY takes a command line; quote each argv token.
@@ -145,6 +158,33 @@ def start(kind: str, custom: str | None = None, cols: int = 120, rows: int = 32)
             write = lambda data: proc.write(data)  # noqa: E731
             read = lambda: proc.read(READ_CHUNK)  # noqa: E731
             alive = lambda: proc.isalive()  # noqa: E731
+            stop = lambda: proc.terminate()  # noqa: E731
+        elif os.name == "posix":
+            # Native POSIX PTY (this is the WSL/Linux path). A real tty is what
+            # lets a Textual TUI negotiate size and draw in place.
+            import fcntl
+            import pty
+            import struct
+            import termios
+
+            master_fd, slave_fd = pty.openpty()
+            try:
+                fcntl.ioctl(slave_fd, termios.TIOCSWINSZ, struct.pack("HHHH", max(5, rows), max(20, cols), 0, 0))
+            except Exception:
+                pass
+            proc = subprocess.Popen(
+                argv,
+                stdin=slave_fd,
+                stdout=slave_fd,
+                stderr=slave_fd,
+                close_fds=True,
+                start_new_session=True,
+            )
+            os.close(slave_fd)
+            fd = master_fd
+            read = lambda: os.read(fd, READ_CHUNK).decode("utf-8", "replace")  # noqa: E731
+            write = lambda data: os.write(fd, data.encode("utf-8"))  # noqa: E731
+            alive = lambda: proc.poll() is None  # noqa: E731
             stop = lambda: proc.terminate()  # noqa: E731
         else:
             proc = subprocess.Popen(
@@ -171,6 +211,7 @@ def start(kind: str, custom: str | None = None, cols: int = 120, rows: int = 32)
         "alive": True,
         "started_at": time.time(),
         "proc": proc,
+        "fd": master_fd,    # POSIX PTY master, closed on stop
         "write": write,
         "stop": stop,
     }
@@ -243,6 +284,11 @@ def stop(sid: str) -> dict[str, Any]:
         session["stop"]()
     except Exception:
         pass
+    if session.get("fd") is not None:
+        try:
+            os.close(session["fd"])
+        except OSError:
+            pass
     session["alive"] = False
     return {"ok": True, "session": sid}
 
